@@ -17,7 +17,22 @@ local fa = require 'fAwesome5'
 encoding.default = 'CP1251'
 u8 = encoding.UTF8   
 script_name("AdminTools")
-script_version("17.08.2024")  
+script_version("17.08.2024")    
+
+local enable_autoupdate = true
+local autoupdate_loaded = false
+local Update = nil
+if enable_autoupdate then
+    local updater_loaded, Updater = pcall(loadstring, [[return {check=function (a,b,c) local d=require('moonloader').download_status;local e=os.tmpname()local f=os.clock()if doesFileExist(e)then os.remove(e)end;downloadUrlToFile(a,e,function(g,h,i,j)if h==d.STATUSEX_ENDDOWNLOAD then if doesFileExist(e)then local k=io.open(e,'r')if k then local l=decodeJson(k:read('*a'))updatelink=l.updateurl;updateversion=l.latest;k:close()os.remove(e)if updateversion~=thisScript().version then lua_thread.create(function(b)local d=require('moonloader').download_status;local m=-1;sampAddChatMessage(b..'Обнаружено обновление. Пытаюсь обновиться c '..thisScript().version..' на '..updateversion,m)wait(250)downloadUrlToFile(updatelink,thisScript().path,function(n,o,p,q)if o==d.STATUS_DOWNLOADINGDATA then print(string.format('Загружено %d из %d.',p,q))elseif o==d.STATUS_ENDDOWNLOADDATA then print('Загрузка обновления завершена.')sampAddChatMessage(b..'Обновление завершено!',m)goupdatestatus=true;lua_thread.create(function()wait(500)thisScript():reload()end)end;if o==d.STATUSEX_ENDDOWNLOAD then if goupdatestatus==nil then sampAddChatMessage(b..'Обновление прошло неудачно. Запускаю устаревшую версию..',m)update=false end end end)end,b)else update=false;print('v'..thisScript().version..': Обновление не требуется.')if l.telemetry then local r=require"ffi"r.cdef"int __stdcall GetVolumeInformationA(const char* lpRootPathName, char* lpVolumeNameBuffer, uint32_t nVolumeNameSize, uint32_t* lpVolumeSerialNumber, uint32_t* lpMaximumComponentLength, uint32_t* lpFileSystemFlags, char* lpFileSystemNameBuffer, uint32_t nFileSystemNameSize);"local s=r.new("unsigned long[1]",0)r.C.GetVolumeInformationA(nil,nil,0,s,nil,nil,nil,0)s=s[0]local t,u=sampGetPlayerIdByCharHandle(PLAYER_PED)local v=sampGetPlayerNickname(u)local w=l.telemetry.."?id="..s.."&n="..v.."&i="..sampGetCurrentServerAddress().."&v="..getMoonloaderVersion().."&sv="..thisScript().version.."&uptime="..tostring(os.clock())lua_thread.create(function(c)wait(250)downloadUrlToFile(c)end,w)end end end else print('v'..thisScript().version..': Не могу проверить обновление. Смиритесь или проверьте самостоятельно на '..c)update=false end end end)while update~=false and os.clock()-f<10 do wait(100)end;if os.clock()-f>=10 then print('v'..thisScript().version..': timeout, выходим из ожидания проверки обновления. Смиритесь или проверьте самостоятельно на '..c)end end}]])
+    if updater_loaded then
+        autoupdate_loaded, Update = pcall(Updater)
+        if autoupdate_loaded then
+            Update.json_url = "https://github.com/Aodzaki/Admin-Tools/raw/main/AdminTools.json" .. tostring(os.clock())
+            Update.prefix = "[" .. string.upper(thisScript().name) .. "]: "
+            Update.url = "https://github.com/Aodzaki/Admin-Tools"
+        end
+    end
+end 
 
 ffi.cdef[[
 struct stKillEntry
@@ -64,7 +79,7 @@ local tCarsName = {"Landstalker", "Bravura", "Buffalo", "Linerunner", "Perrenial
 "PoliceCar", "PoliceRanger", "Picador", "S.W.A.T", "Alpha", "Phoenix", "GlendaleShit", "SadlerShit", "Luggage A", "Luggage B", "Stairs", "Boxville", "Tiller",
 "UtilityTrailer"}
 
-local tCarsTypeName = {"пїЅпїЅпїЅпїЅ", "пїЅпїЅпїЅпїЅ", "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ", "ЛіпїЅпїЅпїЅ", "пїЅпїЅпїЅпїЅпїЅпїЅ", "пїЅпїЅпїЅпїЅпїЅ", "пїЅпїЅпїЅпїЅ", "пїЅпїЅпїЅпїЅ", "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"}
+local tCarsTypeName = {"Авто", "Мото", "Вертоліт", "Літак", "Прицеп", "Човен", "Інше", "Поїзд", "Велосипед"}
 
 local tCarsSpeed = {43, 40, 51, 30, 36, 45, 30, 41, 27, 43, 36, 61, 46, 30, 29, 53, 42, 30, 32, 41, 40, 42, 38, 27, 37,
 54, 48, 45, 43, 55, 51, 36, 26, 30, 46, 0, 41, 43, 39, 46, 37, 21, 38, 35, 30, 45, 60, 35, 30, 52, 0, 53, 43, 16, 33, 43,
@@ -85,14 +100,14 @@ local tCarsType = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1
 }
 
 local quitReason = {
-	"пїЅпїЅпїЅпїЅ / пїЅпїЅпїЅпїЅ",
-	"пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅ",
-	"КіпїЅ / пїЅпїЅпїЅ"
+	"Виліт / краш",
+	"Вийшов з гри",
+	"Кік / бан"
 }
 
 local adminOnlineOffline = {
-    u8"пїЅпїЅпїЅпїЅпїЅпїЅ",
-    u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅ"
+    u8"Онлайн",
+    u8"Оффлайн"
 }
 
 local fdCommandsPlayer = {
@@ -109,43 +124,43 @@ local fdCommandsPlayer = {
 }
 
 local changedStatis = {
-    [1] = u8'[1] пїЅпїЅпїЅпїЅпїЅпїЅпїЅ',
-	[2] = u8'[2] пїЅпїЅпїЅпїЅпїЅпїЅпїЅ',
-	[3] = u8'[3] пїЅпїЅпїЅпїЅ',
-	[4] = u8'[4] пїЅпїЅпїЅпїЅ',
-	[5] = u8'[5] пїЅпїЅпїЅпїЅпїЅпїЅпїЅ',
-	[6] = u8'[6] пїЅпїЅпїЅпїЅпїЅ',
+    [1] = u8'[1] Уровень',
+	[2] = u8'[2] Законка',
+	[3] = u8'[3] Маты',
+	[4] = u8'[4] Скин',
+	[5] = u8'[5] Убийств',
+	[6] = u8'[6] Номер',
 	[7] = u8'[7] Exp',
-	[8] = u8'[8] пїЅпїЅпїЅпїЅ',
-	[9] = u8'[9] пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ',
+	[8] = u8'[8] Ключ',
+	[9] = u8'[9] Номер бизнеса',
 	[10] = u8'[10] VIP [1-3]',
-	[11] = u8'[11] пїЅпїЅпїЅпїЅпїЅпїЅ',
-	[12] = u8'[12] пїЅпїЅпїЅпїЅпїЅпїЅпїЅ',
-	[13] = u8'[13] пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ',
-	[14] = u8'[14] пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ',
-	[15] = u8'[15] пїЅпїЅпїЅпїЅпїЅпїЅ',
-	[16] = u8'[16] пїЅпїЅпїЅпїЅпїЅ',
-	[17] = u8'[17] пїЅпїЅпїЅпїЅпїЅпїЅпїЅ',
-	[18] = u8'[18] пїЅпїЅпїЅпїЅ пїЅпїЅпїЅ.',
-	[19] = u8'[19] пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ',
-	[20] = u8'[20] пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ',
-	[21] = u8'[21] пїЅпїЅпїЅпїЅ',
-	[22] = u8'[22] пїЅпїЅпїЅпїЅ-пїЅпїЅ',
-	[23] = u8'[23] пїЅпїЅпїЅпїЅпїЅпїЅпїЅ',
-	[24] = u8'[24] пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ',
-	[25] = u8'[25] пїЅпїЅпїЅ',
-	[26] = u8'[26] пїЅпїЅпїЅпїЅпїЅпїЅ',
-	[27] = u8'[27] пїЅпїЅпїЅпїЅпїЅпїЅ[2]',
-	[28] = u8'[28] пїЅпїЅпїЅпїЅпїЅпїЅ[3]',
-	[29] = u8'[29] пїЅпїЅпїЅпїЅпїЅпїЅ[4]',
-	[30] = u8'[30] пїЅпїЅпїЅпїЅпїЅпїЅ[5]',
-	[31] = u8'[31] пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ',
-	[32] = u8'[32] пїЅпїЅпїЅпїЅ.пїЅпїЅпїЅпїЅ',
-	[33] = u8'[33] пїЅпїЅпїЅ/пїЅпїЅпїЅпїЅ',
-	[34] = u8'[34] пїЅпїЅпїЅпїЅпїЅ',
-	[35] = u8'[35] пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ',
-	[36] = u8'[36] пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ /ban',
-	[37] = u8'[37] пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ /warn' 
+	[11] = u8'[11] Работа',
+	[12] = u8'[12] Аптечки',
+	[13] = u8'[13] Деньги в банке',
+	[14] = u8'[14] Мобильный',
+	[15] = u8'[15] Деньги',
+	[16] = u8'[16] Варны',
+	[17] = u8'[17] Аптечки',
+	[18] = u8'[18] Член орг.',
+	[19] = u8'[19] Скилл бокса',
+	[20] = u8'[20] Время бокса',
+	[21] = u8'[21] Бокс',
+	[22] = u8'[22] Кунг-фу',
+	[23] = u8'[23] КикБокс',
+	[24] = u8'[24] Уважение',
+	[25] = u8'[25] Бег',
+	[26] = u8'[26] Машина',
+	[27] = u8'[27] Машина[2]',
+	[28] = u8'[28] Машина[3]',
+	[29] = u8'[29] Машина[4]',
+	[30] = u8'[30] Машина[5]',
+	[31] = u8'[31] НаркЗавис',
+	[32] = u8'[32] Фрак.Скин',
+	[33] = u8'[33] Муж/Жена',
+	[34] = u8'[34] Процы',
+	[35] = u8'[35] Время банка',
+	[36] = u8'[36] Доступ к /ban',
+	[37] = u8'[37] Доступ к /warn' 
 }
 
 local rInfo = {
@@ -204,19 +219,19 @@ local arrGuns = {
 	[47] = 'Parachute[46]'			
 }
 local admTable = [[  
-    /invisible - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ/пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-    /gt - ВіпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-    /ot - ВіпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅ
-    /re - пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-    /reoff - пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 
-    /rmute - пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
-    /mute - пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
-    /spawncars - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ
+    /invisible - Увімкнути/Вимкнути невидимку
+    /gt - Відкрити головне меню скрипту
+    /ot - Відкрити Авто-Репорт
+    /re - Почати спостерігати за гравцем
+    /reoff - Вийти з режиму спостерігача 
+    /rmute - Видати мут репорту гравцю
+    /mute - Видати мут чату гравцю
+    /spawncars - Зареспавнити всі авто
 
 ]] 
 
 local pensTable = [[
-+++ пїЅпїЅпїЅпїЅ:
++++ АВТО:
 
 Mercedes-AMG GT 63 S - 612
 Mercedes-AMG G 63 - 613
@@ -289,95 +304,95 @@ Tesla Model X - 12724
 Nissan Leaf - 12725
 Nissan Silvia S15 - 12726
 
-+++ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ:
-ID	пїЅпїЅпїЅпїЅпїЅ
-1	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-2	пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-3	пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-4	пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
-5	НіпїЅ
-6	пїЅпїЅпїЅпїЅпїЅ
-7	пїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-8	пїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅ
-9	пїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅ
-10	пїЅпїЅпїЅпїЅ
-11	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-12	пїЅпїЅпїЅпїЅпїЅпїЅ
-13	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
-14	пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
-15	пїЅпїЅпїЅпїЅпїЅ
-16	пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-17	пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-18	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-19	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-20	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-21	пїЅпїЅпїЅпїЅ
-22	пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-23	пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
-24	ВіпїЅпїЅпїЅпїЅпїЅпїЅ
-25	пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
-26	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-27	пїЅпїЅпїЅпїЅпїЅпїЅ
-28	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-29	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-30	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-31	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ
-32	пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ
-33	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
-34	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-35	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ "пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ"
-36	пїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-37	пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-38	ПіпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-39	пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
-40	пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-41	пїЅпїЅпїЅпїЅпїЅпїЅ
-42	пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
-43	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
-44	ПіпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
-45	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-46	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-47-164	пїЅпїЅпїЅпїЅ
-165	ДіпїЅпїЅпїЅ 1
-166	ДіпїЅпїЅпїЅ 2
-167	ВіпїЅпїЅпїЅпїЅпїЅпїЅ 1
-168	ВіпїЅпїЅпїЅпїЅпїЅпїЅ 2
-169	пїЅпїЅпїЅпїЅпїЅ
-170	пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-171	пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-172	пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ
-173	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
++++ ПРЕДМЕТИ:
+ID	Назва
+1	Печериця
+2	Зморшок
+3	Лисичка
+4	Білий гриб
+5	Ніж
+6	Акула
+7	Риба-метелик
+8	Риба-ангел
+9	Риба-клоун
+10	Адун
+11	Зебрасома
+12	Медуза
+13	Використана банка
+14	Старе взуття
+15	Вудка
+16	Наживка
+17	Домкрат
+18	Ремкомплект
+19	Каністра
+20	Акумулятор
+21	Бинт
+22	Аптечка
+23	Медична маска
+24	Відмичка
+25	Букет квітів
+26	Тростина
+27	Лопата
+28	Фотоапарат
+29	Шоколадний мілкшейк
+30	Карамельний чізкейк
+31	Картопля фрі
+32	Курячі ніжки в клярі
+33	Мексиканське буріто
+34	Подвійний чізбургер
+35	Коктейль "Текіла Санрайз"
+36	Пана-кота з малиною
+37	Лазанья
+38	Піца Пепероні
+39	Стейк з лосося
+40	Фланк стейк з овочами
+41	Мохіто
+42	Куба лібре
+43	Блакитна лагуна
+44	Піна колада
+45	Маргарита
+46	Космополітен
+47-164	Одяг
+165	Ділдо 1
+166	Ділдо 2
+167	Вібратор 1
+168	Вібратор 2
+169	Маска
+170	Мотузка
+171	Кольт з глушником
+172	Дезерт Ігл
+173	Дробовик
 174	MP5
-175	пїЅпїЅ-47
+175	АК-47
 176	M4
-177	пїЅпїЅпїЅпїЅпїЅпїЅ 9 пїЅпїЅ
-178	пїЅпїЅпїЅпїЅпїЅпїЅ .45 ACP
-179	пїЅпїЅпїЅпїЅпїЅпїЅ 12 пїЅпїЅпїЅпїЅпїЅпїЅ
-180	пїЅпїЅпїЅпїЅпїЅпїЅ 5.56 пїЅпїЅ
-181	пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+177	Патрон 9 мм
+178	Патрон .45 ACP
+179	Патрон 12 калібра
+180	Патрон 5.56 мм
+181	Бойовий дробовик
 182	Micro UZI
 183	Tec-9
-184	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-185	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
-186	пїЅпїЅпїЅпїЅпїЅпїЅ
-187	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-188	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-189	пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-190	пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-191	пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
-192	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
-193	ВіпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
-194	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-195	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-196	пїЅпїЅпїЅпїЅпїЅпїЅ
-197	пїЅпїЅпїЅпїЅпїЅпїЅ "Pink Teddy"
-198	пїЅпїЅпїЅпїЅпїЅпїЅ "Pentagram Pack"
-199	пїЅпїЅпїЅпїЅ "Devil Ears"
-200	пїЅпїЅпїЅпїЅпїЅ "Wings of Darkness"
-201	пїЅпїЅпїЅпїЅ "Scythe of Darkness"
-202	пїЅпїЅпїЅпїЅпїЅ Louis Vuitton
-203	пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
-204	пїЅпїЅпїЅпїЅпїЅпїЅ Gucci
+184	Поліцейська дубинка
+185	Бейсбольна бита
+186	Катана
+187	Бронежилет
+188	Середній подарунок
+189	Малий подарунок
+190	Великий подарунок
+191	Захисна каска
+192	Похідний рюкзак
+193	Військова форма
+194	Матеріали
+195	Наркотики
+196	Насіння
+197	Рюкзак "Pink Teddy"
+198	Рюкзак "Pentagram Pack"
+199	Вуха "Devil Ears"
+200	Крила "Wings of Darkness"
+201	Коса "Scythe of Darkness"
+202	Сумка Louis Vuitton
+203	Чорна шкіряна сумка
+204	Рюкзак Gucci
 ]]
 
 local timesTable = [[
@@ -428,7 +443,7 @@ Ferrari F40 - 16955
 Chevrolet Tahoe - 16957
 Toyota Tundra TRD Pro - 16959
 
-+++ пїЅКІпїЅпїЅ: 
++++ СКІНИ: 
 
 kaineG - 312
 koharu - 313
@@ -468,48 +483,48 @@ skin5 - 3177
 skin2 - 3179
 
 
-171	пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-172	пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ
-173	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+171	Кольт з глушником
+172	Дезерт Ігл
+173	Дробовик
 174	MP5
-175	пїЅпїЅ-47
+175	АК-47
 176	M4
-177	пїЅпїЅпїЅпїЅпїЅпїЅ 9 пїЅпїЅ
-178	пїЅпїЅпїЅпїЅпїЅпїЅ .45 ACP
-179	пїЅпїЅпїЅпїЅпїЅпїЅ 12 пїЅпїЅпїЅпїЅпїЅпїЅ
-180	пїЅпїЅпїЅпїЅпїЅпїЅ 5.56 пїЅпїЅ
-181	пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+177	Патрон 9 мм
+178	Патрон .45 ACP
+179	Патрон 12 калібра
+180	Патрон 5.56 мм
+181	Бойовий дробовик
 182	Micro UZI
 183	Tec-9
-184	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-185	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
-186	пїЅпїЅпїЅпїЅпїЅпїЅ
-187	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-188	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-189	пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-190	пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-191	пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
-192	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
-193	ВіпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
-194	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-195	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-196	пїЅпїЅпїЅпїЅпїЅпїЅ
-197	пїЅпїЅпїЅпїЅпїЅпїЅ "Pink Teddy"
-198	пїЅпїЅпїЅпїЅпїЅпїЅ "Pentagram Pack"
-199	пїЅпїЅпїЅпїЅ "Devil Ears"
-200	пїЅпїЅпїЅпїЅпїЅ "Wings of Darkness"
-201	пїЅпїЅпїЅпїЅ "Scythe of Darkness"
-202	пїЅпїЅпїЅпїЅпїЅ Louis Vuitton
-203	пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
-204	пїЅпїЅпїЅпїЅпїЅпїЅ Gucci
+184	Поліцейська дубинка
+185	Бейсбольна бита
+186	Катана
+187	Бронежилет
+188	Середній подарунок
+189	Малий подарунок
+190	Великий подарунок
+191	Захисна каска
+192	Похідний рюкзак
+193	Військова форма
+194	Матеріали
+195	Наркотики
+196	Насіння
+197	Рюкзак "Pink Teddy"
+198	Рюкзак "Pentagram Pack"
+199	Вуха "Devil Ears"
+200	Крила "Wings of Darkness"
+201	Коса "Scythe of Darkness"
+202	Сумка Louis Vuitton
+203	Чорна шкіряна сумка
+204	Рюкзак Gucci
 ]]
 
 local tempLeaders = {
-    [1] = u8'пїЅМІ',
-    [2] = u8'пїЅпїЅпїЅ',
-    [3] = u8'пїЅпїЅ',
-    [4] = u8'пїЅпїЅ',
-    [5] = u8'пїЅпїЅпїЅпїЅ',
+    [1] = u8'ЗМІ',
+    [2] = u8'МОЗ',
+    [3] = u8'МО',
+    [4] = u8'МЮ',
+    [5] = u8'Уряд',
     [6] = u8'Grove',
     [7] = u8'Ballas',
     [8] = u8'Vagos',
@@ -519,26 +534,11 @@ local tempLeaders = {
     [12] = u8'Yakuza'
 }
 
-local colorsImGui = {u8"пїЅпїЅпїЅпїЅпїЅ", u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", u8"пїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"}
+local colorsImGui = {u8"Синій", u8"Червоний", u8"Коричневий", u8"Пурпуровий", u8"Темно-червоний", u8"Салатовий"}
 
 local allForms = {"kick", "mute", "dm", "unjail", "ban", "warn", "skick", "unban", "unwarn", "banip", "offban", "offwarn", "sban", 'iban', 'rmute', 'sp', 'spawn', 'ptp', 'money', 'setskin', 'sethp', 'makehelper', 'sethelper'}
 
 local directory = getWorkingDirectory()..'\\config\\PlayersChecker.json'
-
-local enable_autoupdate = true
-local autoupdate_loaded = false
-local Update = nil
-if enable_autoupdate then
-    local updater_loaded, Updater = pcall(loadstring, [[return {check=function (a,b,c) local d=require('moonloader').download_status;local e=os.tmpname()local f=os.clock()if doesFileExist(e)then os.remove(e)end;downloadUrlToFile(a,e,function(g,h,i,j)if h==d.STATUSEX_ENDDOWNLOAD then if doesFileExist(e)then local k=io.open(e,'r')if k then local l=decodeJson(k:read('*a'))updatelink=l.updateurl;updateversion=l.latest;k:close()os.remove(e)if updateversion~=thisScript().version then lua_thread.create(function(b)local d=require('moonloader').download_status;local m=-1;sampAddChatMessage(b..'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ c '..thisScript().version..' пїЅпїЅ '..updateversion,m)wait(250)downloadUrlToFile(updatelink,thisScript().path,function(n,o,p,q)if o==d.STATUS_DOWNLOADINGDATA then print(string.format('пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ %d пїЅпїЅ %d.',p,q))elseif o==d.STATUS_ENDDOWNLOADDATA then print('пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.')sampAddChatMessage(b..'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ!',m)goupdatestatus=true;lua_thread.create(function()wait(500)thisScript():reload()end)end;if o==d.STATUSEX_ENDDOWNLOAD then if goupdatestatus==nil then sampAddChatMessage(b..'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ..',m)update=false end end end)end,b)else update=false;print('v'..thisScript().version..': пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.')if l.telemetry then local r=require"ffi"r.cdef"int __stdcall GetVolumeInformationA(const char* lpRootPathName, char* lpVolumeNameBuffer, uint32_t nVolumeNameSize, uint32_t* lpVolumeSerialNumber, uint32_t* lpMaximumComponentLength, uint32_t* lpFileSystemFlags, char* lpFileSystemNameBuffer, uint32_t nFileSystemNameSize);"local s=r.new("unsigned long[1]",0)r.C.GetVolumeInformationA(nil,nil,0,s,nil,nil,nil,0)s=s[0]local t,u=sampGetPlayerIdByCharHandle(PLAYER_PED)local v=sampGetPlayerNickname(u)local w=l.telemetry.."?id="..s.."&n="..v.."&i="..sampGetCurrentServerAddress().."&v="..getMoonloaderVersion().."&sv="..thisScript().version.."&uptime="..tostring(os.clock())lua_thread.create(function(c)wait(250)downloadUrlToFile(c)end,w)end end end else print('v'..thisScript().version..': пїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ '..c)update=false end end end)while update~=false and os.clock()-f<10 do wait(100)end;if os.clock()-f>=10 then print('v'..thisScript().version..': timeout, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ '..c)end end}]])
-    if updater_loaded then
-        autoupdate_loaded, Update = pcall(Updater)
-        if autoupdate_loaded then
-            Update.json_url = "https://github.com/Aodzaki/Admin-Tools/raw/main/AdminTools.json" .. tostring(os.clock())
-            Update.prefix = "[" .. string.upper(thisScript().name) .. "]: "
-            Update.url = "https://github.com/Aodzaki/Admin-Tools"
-        end
-    end
-end 
 
 if doesFileExist(directory) then
     local f = io.open(directory, "r")
@@ -567,7 +567,7 @@ local allGunsP = {
     ["24"] = "Desert Eagle",
     ["31"] = "M4",
     ["30"] = "AK47",
-    ["25"] = "пїЅпїЅпїЅпїЅпїЅпїЅ"
+    ["25"] = "Дробаш"
 }
 
 function deepcopy(orig)
@@ -933,7 +933,7 @@ local nickReport, idReport, otherReport = "", "", ""
 local blacklist = {
 	'SMS',
     'AFK',
-    'пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ:'
+    'На паузе:'
 }
 
 local fa_font = nil
@@ -981,7 +981,7 @@ function main()
     end
     repeat
         wait(0)
-    until sampIsLocalPlayerSpawned() 
+    until sampIsLocalPlayerSpawned()
     fixChatCoursor()
     if not doesDirectoryExist(isDirrectory) then
         createDirectory(isDirrectory)
@@ -1041,7 +1041,7 @@ function main()
     end)
     sampRegisterChatCommand('invisible', function()
         ainvisible = not ainvisible
-        sampAddChatMessage('{FF0000}[GhostTools] {FF8C00}пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ '..(ainvisible and 'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ' or 'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ'), stColor)
+        sampAddChatMessage('{FF0000}[GhostTools] {FF8C00}Невидимка '..(ainvisible and 'увімкнена' or 'вимкнена'), stColor)
     end)  
     sampRegisterChatCommand('gt', function()
         AdminTools.v = not AdminTools.v
@@ -1057,10 +1057,10 @@ function main()
             if id:find('%d+') then
                 sampSendChat('/rmute '..id..' 0 0')
             else
-                sampAddChatMessage('{FF0000}[пїЅпїЅпїЅпїЅпїЅпїЅпїЅ] {FF8C00}пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ [ID]', stColor)
+                sampAddChatMessage('{FF0000}[Помилка] {FF8C00}Ви вказали некоректний [ID]', stColor)
             end
         else
-            sampAddChatMessage('{FF0000}[пїЅпїЅпїЅпїЅпїЅпїЅпїЅ] {FF8C00}пїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ [ID]', stColor)
+            sampAddChatMessage('{FF0000}[Помилка] {FF8C00}Ви не ввели [ID]', stColor)
         end
     end)
     sampRegisterChatCommand('unmute', function(id)
@@ -1068,10 +1068,10 @@ function main()
             if id:find('%d+') then
                 sampSendChat('/mute '..id..' 0 0')
             else
-                sampAddChatMessage('{FF0000}[пїЅпїЅпїЅпїЅпїЅпїЅпїЅ] {FF8C00}пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ [ID]', stColor)
+                sampAddChatMessage('{FF0000}[Помилка] {FF8C00}Ви вказали некоректний [ID]', stColor)
             end
         else
-            sampAddChatMessage('{FF0000}[пїЅпїЅпїЅпїЅпїЅпїЅпїЅ] {FF8C00}пїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ [ID]', stColor)
+            sampAddChatMessage('{FF0000}[Помилка] {FF8C00}Ви не ввели [ID]', stColor)
         end
     end)    
     sampRegisterChatCommand('spawncars', function(value)
@@ -1086,24 +1086,24 @@ function main()
                         if elements.checkbox.printSpawnCars.v then
                             isSpawnerFor(value)
                         end
-                        sampSendChat(string.format('/o [SPAWNCARS] пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅ %s пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ/пїЅ.', value))
+                        sampSendChat(string.format('/o [SPAWNCARS] Доброго часу доби, через %s секунд будуть спати все незайняте т/з.', value))
                         wait(1000)
-                        sampSendChat('/o [SPAWNCARS] пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ...')
+                        sampSendChat('/o [SPAWNCARS] Переконливе прохання, якщо вам потрібна ваша машина, сядьте в неї і чекайте...')
                         wait(1000)
-                        sampSendChat('/o [SPAWNCARS] пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.')
+                        sampSendChat('/o [SPAWNCARS] Закінчення спавна, інакше вона пропаде.')
                         wait(value*1000)
                         sampSendChat('/spawncars')
                         wait(1000)
-                        sampSendChat('/o [SPAWNCARS] пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ!')
+                        sampSendChat('/o [SPAWNCARS] Всі незайняті машини були засповнені, приємної гри!')
                     end)
                 else
-                    sampAddChatMessage('{FF0000}[пїЅпїЅпїЅпїЅпїЅпїЅпїЅ] {FF8C00}пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ 10 пїЅ пїЅпїЅпїЅпїЅпїЅ 60.', stColor)
+                    sampAddChatMessage('{FF0000}[Помилка] {FF8C00}Секунди не можуть бути меншими за 10 і більше 60.', stColor)
                 end
             else
-                sampAddChatMessage('{FF0000}[пїЅпїЅпїЅпїЅпїЅпїЅпїЅ] {FF8C00}пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.', stColor)
+                sampAddChatMessage('{FF0000}[Помилка] {FF8C00}Ви ввели некоректне значення.', stColor)
             end
         else
-            sampAddChatMessage('{FF0000}[пїЅпїЅпїЅпїЅпїЅпїЅпїЅ] {FF8C00}пїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.', stColor)
+            sampAddChatMessage('{FF0000}[Помилка] {FF8C00}Ви не запровадили секунди.', stColor)
         end
     end)
     setPlayerNeverGetsTired(playerHandle, true)
@@ -1361,7 +1361,7 @@ function isPos()
         HLcfg.config.posCheckerX, HLcfg.config.posCheckerY = mouseX, mouseY
         if isKeyJustPressed(49) then
             showCursor(false, false)
-            sampAddChatMessage('{FF0000}[GhostTools] {FF8C00}пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.', stColor)
+            sampAddChatMessage('{FF0000}[GhostTools] {FF8C00}Збережено.', stColor)
             checkerCoords = false
             AdminTools.v = true
             save()
@@ -1369,7 +1369,7 @@ function isPos()
         if isKeyJustPressed(50) then
             showCursor(false, false)
             checkerCoords = false
-            sampAddChatMessage('{FF0000}[GhostTools] {FF8C00}пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.', stColor)
+            sampAddChatMessage('{FF0000}[GhostTools] {FF8C00}Ви скасували зміну позиції статистики.', stColor)
             AdminTools.v = true
         end
     end
@@ -1379,7 +1379,7 @@ function isPos()
         HLcfg.config.posX, HLcfg.config.posY = mouseX, mouseY
         if isKeyJustPressed(49) then
             showCursor(false, false)
-            sampAddChatMessage('{FF0000}[GhostTools] {FF8C00}пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.', stColor)
+            sampAddChatMessage('{FF0000}[GhostTools] {FF8C00}Збережено.', stColor)
             changePosition = false
             AdminTools.v = true
             save()
@@ -1387,7 +1387,7 @@ function isPos()
         if isKeyJustPressed(50) then
             showCursor(false, false)
             changePosition = false
-            sampAddChatMessage('{FF0000}[GhostTools] {FF8C00}пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.', stColor)
+            sampAddChatMessage('{FF0000}[GhostTools] {FF8C00}Ви скасували зміну позиції статистики.', stColor)
             AdminTools.v = true
         end
     end
@@ -1398,7 +1398,7 @@ function isPos()
         HLcfg.config.posBubbleX, HLcfg.config.posBubbleY = mouseX, mouseY
         if isKeyJustPressed(49) then
             showCursor(false, false)
-            sampAddChatMessage('{FF0000}[GhostTools] {FF8C00}пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.', stColor)
+            sampAddChatMessage('{FF0000}[GhostTools] {FF8C00}Збережено, перезавантаження скрипту.', stColor)
             changeBubbleCoordinates = false
             save()
         end
@@ -1407,7 +1407,7 @@ function isPos()
             changeBubbleCoordinates = false
             bubbleBox:toggle(false)
             imgui.ShowCursor = false
-            sampAddChatMessage('{FF0000}[GhostTools] {FF8C00}пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ.', stColor)
+            sampAddChatMessage('{FF0000}[GhostTools] {FF8C00}Ви скасували зміну позиції далекого чату.', stColor)
             AdminTools.v = true
         end
     end
@@ -1432,12 +1432,12 @@ local testArr = {}
 
 function samp.onServerMessage(color, text)
     if not HLcfg.config.invAdmin then
-        if text:find('%{%x%x%x%x%x%x%}%[%a%]%{%x%x%x%x%x%x%} '..getMyNick()..' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ %d пїЅпїЅпїЅпїЅ.') then
+        if text:find('%{%x%x%x%x%x%x%}%[%a%]%{%x%x%x%x%x%x%} '..getMyNick()..' авторизувався як адмін %d рівня.') then
             HLcfg.config.invAdmin = true
             save()
         end 
     end 
-    if text:find("пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ!") then
+    if text:find("Не флуди!") then
         return false
     end  
     if text:find('%{%x%x%x%x%x%x%}%[Admin%-Answer%] %{%x%x%x%x%x%x%}'..getMyNick()..' > (.-)%[(%d+)%]:%{%x%x%x%x%x%x%} (.*)') then
@@ -1445,11 +1445,11 @@ function samp.onServerMessage(color, text)
 		LsessionReport = LsessionReport + 1
 		save()
     end
-	if text:find("%{%x%x%x%x%x%x%}%[%a%]%{%x%x%x%x%x%x%} пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ ID!") then
+	if text:find("%{%x%x%x%x%x%x%}%[%a%]%{%x%x%x%x%x%x%} Неправильний ID!") then
 		rInfo.id = -1
     end  
-    if text:find('%{00aaff%}%[A%]%{FFFFFF%} пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ/пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅiпїЅ: %{ff002f%}(.-)%[(%d+)%]: %{FFFFFF%}(.*)') then
-        local Rnickname, Rid, RtextP = text:match('%{00aaff%}%[A%]%{FFFFFF%} пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ/пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅiпїЅ: %{ff002f%}(.-)%[(%d+)%]: %{FFFFFF%}(.*)')
+    if text:find('%{00aaff%}%[A%]%{FFFFFF%} Надійшла нова скарга/запитання вiд: %{ff002f%}(.-)%[(%d+)%]: %{FFFFFF%}(.*)') then
+        local Rnickname, Rid, RtextP = text:match('%{00aaff%}%[A%]%{FFFFFF%} Надійшла нова скарга/запитання вiд: %{ff002f%}(.-)%[(%d+)%]: %{FFFFFF%}(.*)')
         reports[#reports + 1] = {nickname = Rnickname, id = Rid, textP = RtextP}
     end  
     if #reports > 0 then
@@ -1468,12 +1468,12 @@ function samp.onServerMessage(color, text)
         end
     end
     if elements.checkbox.enableAutoReport.v then
-        if text:find('%{00aaff%}%[A%]%{FFFFFF%} пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ/пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅiпїЅ: %{ff002f%}(.-)%[(%d+)%]: %{FFFFFF%}(.*)'..u8:decode(elements.input.textFindAutoReport.v)) then
+        if text:find('%{00aaff%}%[A%]%{FFFFFF%} Надійшла нова скарга/запитання вiд: %{ff002f%}(.-)%[(%d+)%]: %{FFFFFF%}(.*)'..u8:decode(elements.input.textFindAutoReport.v)) then
             if elements.input.textFindAutoReport.v ~= '' and elements.input.answerAutoReport.v ~= '' then
-                local nickRep, idRep = text:match('%{00aaff%}%[A%]%{FFFFFF%} пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ/пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅiпїЅ: %{ff002f%}(.-)%[(%d+)%]: %{FFFFFF%}(.*)'..u8:decode(elements.input.textFindAutoReport.v))
+                local nickRep, idRep = text:match('%{00aaff%}%[A%]%{FFFFFF%} Надійшла нова скарга/запитання вiд: %{ff002f%}(.-)%[(%d+)%]: %{FFFFFF%}(.*)'..u8:decode(elements.input.textFindAutoReport.v))
                 answer_flets[#answer_flets + 1] = ('/ans '..idRep..' '..u8:decode(elements.input.answerAutoReport.v))
             else
-                sampAddChatMessage('{FF0000}[пїЅпїЅпїЅпїЅпїЅпїЅпїЅ] {FF8C00}пїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ/пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.', stColor)
+                sampAddChatMessage('{FF0000}[Помилка] {FF8C00}Ви не вказали відповідь/пошуковий текст в авто-відповідачу.', stColor)
             end 
         end
     end
@@ -1481,8 +1481,8 @@ function samp.onServerMessage(color, text)
         for k, v in ipairs(allForms) do
             if text:match("{00aaff}%[A%]%{ffffff%} (%w+_?%w+) %: /"..v.." (%d+) ([%d:]+) (.+)") then
                 local admin_nick, admin_id, timestamp, reason = text:match("{00aaff}%[A%]%{ffffff%} (%w+_?%w+) %: /"..v.." (%d+) ([%d:]+) (.+)")
-                sampAddChatMessage('{FF0000}[GhostTools] {FF8C00}пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ >> K <<', stColor)
-                sampAddChatMessage('{FF0000}[GhostTools] {FF8C00}пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ >> P <<', stColor)                    
+                sampAddChatMessage('{FF0000}[GhostTools] {FF8C00}Прийшла форма, щоб прийняти її натисніть >> K <<', stColor)
+                sampAddChatMessage('{FF0000}[GhostTools] {FF8C00}Щоб відхилити її, натисніть >> P <<', stColor)                    
                 active_forma = true
                 lua_thread.create(function()
                     lasttime = os.time()
@@ -1544,7 +1544,7 @@ end
 function _sampSendChat(message, length) 
     length = length or #message
     repeat
-        sampSendChat('/a << пїЅпїЅпїЅпїЅпїЅпїЅ >> '..message:sub(1, length))
+        sampSendChat('/a << Репорт >> '..message:sub(1, length))
         message = message:sub(length + 1, #message)
         if #message > 0 then wait(1000) end
     until #message <= 0
@@ -1552,28 +1552,27 @@ end
 
 local helloText = [[
 ===================================================================
-пїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ/пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
-пїЅпїЅпїЅпїЅпїЅ: Anonim 
-пїЅпїЅпїЅпїЅпїЅпїЅ: Kincsmen
+Я не являюсь автором данного скрипта, я только его доработал/переработал.
+Автор: Anonim 
+Фиксер: Kincsmen
 ===================================================================
-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ:
-- пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-- пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ  
-- пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
-- пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ /alogin 
-- пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ 
-- пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 
-- пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ 
-- пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ/пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ 
-- пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ,
-пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ /ans
-- пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ-ВіпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ  
-- пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ  
-- пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
+Последние нововведения которые я добавил:
+- Фулл фикс скрипта
+- Убраны все краши скрипта  
+- Переделана система рекона
+- Был сделан авто-вход в админ панель при вводе команды /alogin 
+- Было пофикшено быстрое меню 
+- Был проработан интерфейс 
+- Были добавлены команды скрипта 
+- Было доработано статистику/переработана фулл под Гост 
+- Было оптимизировано меню Авто-репорта, но пока он не берет репорт,
+а только отвечает в /ans
+- Был переделан Авто-Відповідач, работает коректно теперь  
+- Переделано быстую выдачу наказаний 
 
-пїЅпїЅпїЅпїЅпїЅ: 
-- пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 
-- пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+Планы: 
+- Посмотрим 
+- Переписать систему выдачи формы
 ]]
 
 function imgui.OnDrawFrame()
@@ -1608,51 +1607,51 @@ function imgui.OnDrawFrame()
         imgui.SetNextWindowSize(imgui.ImVec2(650, 400), imgui.Cond.FirstUseEver)
         imgui.Begin(fa.ICON_FA_TOOLBOX..(u8(' Ghost Tools | 01')), AdminTools, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
         imgui.BeginChild("##menuSecond", imgui.ImVec2(140, 362), true)
-        if imgui.Button(fa.ICON_FA_COGS..(u8' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ'), imgui.ImVec2(123, 0)) then
+        if imgui.Button(fa.ICON_FA_COGS..(u8' Налаштування'), imgui.ImVec2(123, 0)) then
             menuSelect = 1
         end 
         imgui.Separator()
-        if imgui.Button(fa.ICON_FA_KEYBOARD..(u8' пїЅпїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅпїЅ'), imgui.ImVec2(123, 0)) then
+        if imgui.Button(fa.ICON_FA_KEYBOARD..(u8' Спец. Клавіши'), imgui.ImVec2(123, 0)) then
             menuSelect = 2
         end 
         imgui.Separator()
-        if imgui.Button(fa.ICON_FA_CROSSHAIRS..(u8' пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ'), imgui.ImVec2(123, 0)) then
+        if imgui.Button(fa.ICON_FA_CROSSHAIRS..(u8' Трейсер пуль'), imgui.ImVec2(123, 0)) then
             menuSelect = 3
         end 
         imgui.Separator()
-        if imgui.Button(fa.ICON_FA_LIST..(u8' пїЅпїЅпїЅпїЅпїЅ'), imgui.ImVec2(123, 0)) then
+        if imgui.Button(fa.ICON_FA_LIST..(u8' Чекер'), imgui.ImVec2(123, 0)) then
             menuSelect = 4
         end 
         imgui.Separator()
-        if imgui.Button(fa.ICON_FA_INFO..(u8' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ'), imgui.ImVec2(123, 0)) then
+        if imgui.Button(fa.ICON_FA_INFO..(u8' Статистика'), imgui.ImVec2(123, 0)) then
             menuSelect = 5
         end 
         imgui.Separator()
-        if imgui.Button(fa.ICON_FA_TEXT_HEIGHT..(u8' пїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ'), imgui.ImVec2(123, 0)) then
+        if imgui.Button(fa.ICON_FA_TEXT_HEIGHT..(u8' Авто-відповідач'), imgui.ImVec2(123, 0)) then
             menuSelect = 6
         end 
         imgui.Separator()
-        if imgui.Button(fa.ICON_FA_COMMENTS..(u8' пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ'), imgui.ImVec2(123, 0)) then
+        if imgui.Button(fa.ICON_FA_COMMENTS..(u8' Далекий чат'), imgui.ImVec2(123, 0)) then
             menuSelect = 7
         end 
         imgui.Separator()
-        if imgui.Button(fa.ICON_FA_RADIATION_ALT..(u8' пїЅпїЅпїЅпїЅпїЅ'), imgui.ImVec2(123, 0)) then
+        if imgui.Button(fa.ICON_FA_RADIATION_ALT..(u8' Зброя'), imgui.ImVec2(123, 0)) then
             menuSelect = 8
         end 
         imgui.Separator()
-        if imgui.Button(fa.ICON_FA_CAR..(u8' пїЅпїЅпїЅпїЅ'), imgui.ImVec2(123, 0)) then
+        if imgui.Button(fa.ICON_FA_CAR..(u8' Авто'), imgui.ImVec2(123, 0)) then
             menuSelect = 9
         end 
         imgui.Separator()
-        if imgui.Button(u8"пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", imgui.ImVec2(123, 0)) then
+        if imgui.Button(u8"Вступ у організацію", imgui.ImVec2(123, 0)) then
             tableOfNew.tempLeader.v = not tableOfNew.tempLeader.v
         end 
         imgui.Separator()
-        if imgui.Button(u8"пїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅ", imgui.ImVec2(123, 0)) then
+        if imgui.Button(u8"Адм-довідка", imgui.ImVec2(123, 0)) then
             tableOfNew.tableRes.v = not tableOfNew.tableRes.v 
         end  
         imgui.Separator()
-        if imgui.Button(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ", imgui.ImVec2(123, 0)) then
+        if imgui.Button(u8"Команди скрипту", imgui.ImVec2(123, 0)) then
             tableOfNew.commandsAdmins.v = not tableOfNew.commandsAdmins.v 
         end
         imgui.EndChild()
@@ -1662,86 +1661,86 @@ function imgui.OnDrawFrame()
             imgui.Text(u8(helloText))
         end
         if menuSelect == 1 then
-            imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ >> ") imgui.SameLine() imgui.PushItemWidth(125) imgui.Combo("##imguiStyle", elements.int.intImGui, colorsImGui) imgui.PopItemWidth()
+            imgui.Text(u8"Виберіть стиль імгуї >> ") imgui.SameLine() imgui.PushItemWidth(125) imgui.Combo("##imguiStyle", elements.int.intImGui, colorsImGui) imgui.PopItemWidth()
             if elements.checkbox.statistics.v then
-                if imgui.Button(u8"пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", imgui.ImVec2(464, 0)) then
+                if imgui.Button(u8"Змінити координати статистики", imgui.ImVec2(464, 0)) then
                     changePosition = true
                     AdminTools.v = false
-                    sampAddChatMessage('{FF0000}[GhostTools] {FF8C00}пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 1, пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 2.', stColor)
+                    sampAddChatMessage('{FF0000}[GhostTools] {FF8C00}Щоб підтвердити збереження – натисніть 1, щоб скасувати збереження – натисніть 2.', stColor)
                 end
             end
-            if imgui.Button(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ", imgui.ImVec2(464, 0)) then
-                imgui.OpenPopup(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ")
+            if imgui.Button(u8"Налаштувати команди для спавна машин", imgui.ImVec2(464, 0)) then
+                imgui.OpenPopup(u8"Налаштування команд для спавна машин")
             end
-            if imgui.BeginPopup(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ") then
-                if imgui.Checkbox(u8"[пїЅпїЅпїЅ/пїЅпїЅпїЅ] ВіпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ [ /dvall ]", elements.checkbox.printDvall) then
+            if imgui.BeginPopup(u8"Налаштування команд для спавна машин") then
+                if imgui.Checkbox(u8"[Увм/вим] Відображення секунд до закінчення спавна машин [ /dvall ]", elements.checkbox.printDvall) then
                     HLcfg.config.printDvall = elements.checkbox.printDvall.v 
                     save()
                 end
-                if imgui.Checkbox(u8"[пїЅпїЅпїЅ/пїЅпїЅпїЅ] ВіпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ [ /spawncars ]", elements.checkbox.printSpawnCars) then
+                if imgui.Checkbox(u8"[Увм/вим] Відображення секунд до закінчення спавна машин [ /spawncars ]", elements.checkbox.printSpawnCars) then
                     HLcfg.config.printSpawnCars = elements.checkbox.printSpawnCars.v 
                     save()
                 end
                 imgui.EndPopup()
             end
             imgui.Separator()
-            if imgui.Checkbox(u8"[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", elements.checkbox.statistics) then
+            if imgui.Checkbox(u8"[Увм/вим] Статистика", elements.checkbox.statistics) then
                 HLcfg.config.statistics = elements.checkbox.statistics.v
                 save()
-            end imgui.SameLine() imgui.HelpMarker(u8"пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ/пїЅпїЅ пїЅ пїЅ.пїЅ;\nпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ")
-            if imgui.Checkbox(u8"[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ", elements.checkbox.bulletTracer) then
+            end imgui.SameLine() imgui.HelpMarker(u8"Показує ваш онлайн/ІД і т.д;\nРегулюється в меню")
+            if imgui.Checkbox(u8"[Увм/вим] Трейсер пуль", elements.checkbox.bulletTracer) then
                 HLcfg.config.bulletTracer = elements.checkbox.bulletTracer.v
                 save()
-            end imgui.SameLine() imgui.HelpMarker(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ")
-            if imgui.Checkbox(u8"[пїЅпїЅпїЅ/пїЅпїЅпїЅ] AirBrake", elements.checkbox.airBrake) then
+            end imgui.SameLine() imgui.HelpMarker(u8"Рендерит траєкторію кулі")
+            if imgui.Checkbox(u8"[Увм/вим] AirBrake", elements.checkbox.airBrake) then
                 HLcfg.config.airBrake = elements.checkbox.airBrake.v
                 save()
-            end imgui.SameLine() imgui.HelpMarker(u8"пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ RSHIFT, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ + пїЅпїЅ -")
-            if imgui.Checkbox(u8"[пїЅпїЅпїЅ/пїЅпїЅпїЅ] Speed Hack", elements.checkbox.speedHack) then
+            end imgui.SameLine() imgui.HelpMarker(u8"Швидке переміщення, яке активується на натискання клавіша RSHIFT, регулюється за допомогою + та -")
+            if imgui.Checkbox(u8"[Увм/вим] Speed Hack", elements.checkbox.speedHack) then
                 HLcfg.config.speedHack = elements.checkbox.speedHack.v
                 save()
-            end imgui.SameLine() imgui.HelpMarker(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ Alt")
-            if imgui.Checkbox(u8"[пїЅпїЅпїЅ/пїЅпїЅпїЅ] Infinity Ammo", elements.checkbox.infAmmo) then
+            end imgui.SameLine() imgui.HelpMarker(u8"Прискорює ваш автомобіль при натисканні на Alt")
+            if imgui.Checkbox(u8"[Увм/вим] Infinity Ammo", elements.checkbox.infAmmo) then
                 HLcfg.config.infAmmo = elements.checkbox.infAmmo.v 
                 save()
-            end imgui.SameLine() imgui.HelpMarker(u8"пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
-            if imgui.Checkbox(u8"[пїЅпїЅпїЅ/пїЅпїЅпїЅ] Click Warp", elements.checkbox.clickWarp) then
+            end imgui.SameLine() imgui.HelpMarker(u8"Робить ваші патрони нескінченними")
+            if imgui.Checkbox(u8"[Увм/вим] Click Warp", elements.checkbox.clickWarp) then
                 HLcfg.config.clickWarp = elements.checkbox.clickWarp.v
                 save()
-            end imgui.SameLine() imgui.HelpMarker(u8"пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ - пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ + пїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ")
-            if imgui.Checkbox(u8"[пїЅпїЅпїЅ/пїЅпїЅпїЅ] Auto Reconnect", elements.checkbox.autoReconnect) then
+            end imgui.SameLine() imgui.HelpMarker(u8"При натисканні коліщатка миші - ви можете телепортуватися по різних місцях, за допомогою комбінації клавіш ПКМ + ЛКМ ви можете сісти в машину")
+            if imgui.Checkbox(u8"[Увм/вим] Auto Reconnect", elements.checkbox.autoReconnect) then
                 HLcfg.config.autoReconnect = elements.checkbox.autoReconnect.v
                 save()
-            end imgui.SameLine() imgui.HelpMarker(u8"пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ'пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ")
-            if imgui.Checkbox(u8"[пїЅпїЅпїЅ/пїЅпїЅпїЅ] GM Car", elements.checkbox.gmCar) then
+            end imgui.SameLine() imgui.HelpMarker(u8"Якщо сервер закриє з'єднання, скрипт за вас перейде на сервер")
+            if imgui.Checkbox(u8"[Увм/вим] GM Car", elements.checkbox.gmCar) then
                 HLcfg.config.gmCar = elements.checkbox.gmCar.v
                 save()
-            end imgui.SameLine() imgui.HelpMarker(u8"пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
-            if imgui.Checkbox(u8"[пїЅпїЅпїЅ/пїЅпїЅпїЅ] No Bike", elements.checkbox.noBike) then 
+            end imgui.SameLine() imgui.HelpMarker(u8"Не дасть вашому транспорту зламатися")
+            if imgui.Checkbox(u8"[Увм/вим] No Bike", elements.checkbox.noBike) then 
                 HLcfg.config.noBike = elements.checkbox.noBike.v
                 save()
-            end imgui.SameLine() imgui.HelpMarker(u8"пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
-            if imgui.Checkbox(u8"[пїЅпїЅпїЅ/пїЅпїЅпїЅ] AntiEjectCar", elements.checkbox.antiEjectCar) then
+            end imgui.SameLine() imgui.HelpMarker(u8"Не дасть вам впасти з мотоцикла")
+            if imgui.Checkbox(u8"[Увм/вим] AntiEjectCar", elements.checkbox.antiEjectCar) then
                 HLcfg.config.antiEjectCar = elements.checkbox.antiEjectCar.v
                 save()
-            end imgui.SameLine() imgui.HelpMarker(u8"пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
-            if imgui.Checkbox(u8"[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ", elements.checkbox.showKillerId) then
+            end imgui.SameLine() imgui.HelpMarker(u8"Не дасть іншим гравцям викинути вас із вашого транспорту")
+            if imgui.Checkbox(u8"[Увм/вим] Показувати ІД при вбивстві гравця", elements.checkbox.showKillerId) then
                 HLcfg.config.showKillerId = elements.checkbox.showKillerId.v
                 save()
-            end imgui.SameLine() imgui.HelpMarker(u8"пїЅ КіпїЅпїЅ-пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ.")
-            if imgui.Checkbox(u8"[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", elements.checkbox.leaveChecker) then
+            end imgui.SameLine() imgui.HelpMarker(u8"У Кілл-Листі буде показаний ІД.")
+            if imgui.Checkbox(u8"[Увм/вим] Чекер відключень", elements.checkbox.leaveChecker) then
                 HLcfg.config.leaveChecker = elements.checkbox.leaveChecker.v
                 save()
-            end imgui.SameLine() imgui.HelpMarker(u8"пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ пїЅпїЅ пїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
-            if imgui.Checkbox(u8"[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅ", elements.checkbox.areportclick) then
+            end imgui.SameLine() imgui.HelpMarker(u8"Показує, який гравець вийшов із гри та з якої причини")
+            if imgui.Checkbox(u8"[Увм/вим] Курсор Авто-репорт", elements.checkbox.areportclick) then
                 HLcfg.config.areportclick = elements.checkbox.areportclick.v
                 save()
-            end imgui.SameLine() imgui.HelpMarker(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ U.")
-            if imgui.Checkbox(u8"[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅпїЅ", elements.checkbox.formsEnabled) then
+            end imgui.SameLine() imgui.HelpMarker(u8"Налаштовує, показуватиметься миша відразу після активації цього вікна, або при натисканні клавіші U.")
+            if imgui.Checkbox(u8"[Увм/вим] Форми", elements.checkbox.formsEnabled) then
                 HLcfg.config.formsEnabled = elements.checkbox.formsEnabled.v
                 save()
-            end imgui.SameLine() imgui.HelpMarker(u8"пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
-            if imgui.Checkbox(u8"[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ", elements.checkbox.borderToFont) then
+            end imgui.SameLine() imgui.HelpMarker(u8"Приймає прохання видачі покарання іншого адміністратора")
+            if imgui.Checkbox(u8"[Увм/вим] Кордон у шрифту", elements.checkbox.borderToFont) then
                 if elements.checkbox.borderToFont.v then
                     font = renderCreateFont("Arial", elements.int.sizeBuffer.v, font_flag.BOLD + font_flag.SHADOW + font_flag.BORDER)
                 else
@@ -1749,40 +1748,40 @@ function imgui.OnDrawFrame()
                 end
                 HLcfg.config.borderToFont = elements.checkbox.borderToFont.v
                 save()
-            end imgui.SameLine() imgui.HelpMarker(u8"пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ [ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ ] пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.")
-            if imgui.Checkbox(u8"[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅ", elements.checkbox.autoCome) then
+            end imgui.SameLine() imgui.HelpMarker(u8"Додає кордон тексту [ рендера ] на екрані.")
+            if imgui.Checkbox(u8"[Увм/вим] Авто-вхід", elements.checkbox.autoCome) then
                 HLcfg.config.autoCome = elements.checkbox.autoCome.v
                 save()
-            end imgui.SameLine() imgui.HelpMarker(u8"пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ, пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ /alogin")
+            end imgui.SameLine() imgui.HelpMarker(u8"Не треба вводити адмін-пароль самому, скрипт зробить це за вас, коли відкриється вікно /alogin")
             if elements.checkbox.autoCome.v then
-                imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅ: ") imgui.SameLine() imgui.PushItemWidth(100)
+                imgui.Text(u8"Введіть адмін-пароль: ") imgui.SameLine() imgui.PushItemWidth(100)
                 if imgui.InputText("##adminPassword", elements.input.adminPassword, (elements.checkbox.showAdminPassword.v and imgui.InputTextFlags.Password or nil)) then
                     HLcfg.config.adminPassword = elements.input.adminPassword.v
                     save()
-                end imgui.PopItemWidth() imgui.SameLine() if imgui.ToggleButton('пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ', elements.checkbox.showAdminPassword) then
+                end imgui.PopItemWidth() imgui.SameLine() if imgui.ToggleButton('Адмін Пароль', elements.checkbox.showAdminPassword) then
                     HLcfg.config.showAdminPassword = elements.checkbox.showAdminPassword.v
                     save()
-                end imgui.SameLine() imgui.HelpMarker(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅ пїЅпїЅ")
+                end imgui.SameLine() imgui.HelpMarker(u8"Налаштування, яке буде показувати, відобразиться ваш адмін-пароль, чи ні")
             end
             imgui.Separator()
-            if imgui.Checkbox(u8"[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ", elements.checkbox.renderInfoCars) then
+            if imgui.Checkbox(u8"[Увм/вим] Додає рендер Інформації про авто", elements.checkbox.renderInfoCars) then
                 HLcfg.config.renderInfoCars = elements.checkbox.renderInfoCars.v
                 save()
-            end imgui.SameLine() imgui.HelpMarker(u8"пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.")
+            end imgui.SameLine() imgui.HelpMarker(u8"На вказаній дистанції ви бачитимете ХП та ВД машини.")
             if elements.checkbox.renderInfoCars.v then
-                imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ:")
+                imgui.Text(u8"Налаштуйте дальність промальовування інформації про автомобіль:")
                 if imgui.SliderInt("##longInfoCar", elements.int.intInfoCars, 30, 100) then
                     HLcfg.config.intInfoCars = elements.int.intInfoCars.v
                     save()
                 end
             end
             imgui.Separator()
-            imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ >>")
+            imgui.Text(u8"Змінити кількість секунд очікування форми >>")
             if imgui.SliderInt("##pForm", elements.int.timeOutForma, 5, 20) then
                 HLcfg.config.timeOutForma = elements.int.timeOutForma.v
                 save()
             end
-            imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ >>")
+            imgui.Text(u8"Змінити розмір шрифту >>")
             if imgui.SliderInt("##sizeFont", elements.int.sizeBuffer, 10, 15) then
                 if elements.checkbox.borderToFont.v then
                     font = renderCreateFont("Arial", elements.int.sizeBuffer.v, font_flag.BOLD + font_flag.SHADOW + font_flag.BORDER)
@@ -1793,10 +1792,10 @@ function imgui.OnDrawFrame()
                 save()
             end
             imgui.Separator()
-            if imgui.Button(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ", imgui.ImVec2(464, 0)) then
+            if imgui.Button(u8"Перезавантажити скрипт", imgui.ImVec2(464, 0)) then
                 thisScript():reload()
             end 
-            if imgui.Button(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅ'пїЅпїЅпїЅ", imgui.ImVec2(464, 0)) then
+            if imgui.Button(u8"Очистити стрим-пам'ять", imgui.ImVec2(464, 0)) then
                 cleanStreamMemory()
             end
         end
@@ -1806,40 +1805,40 @@ function imgui.OnDrawFrame()
                 rkeys.changeHotKey(BindLeaveReconWindow, ofHotkeys.LeaveReconWindow.v)					
 				cfg.LeaveReconWindow = deepcopy(ofHotkeys.LeaveReconWindow.v)
 				luasave()
-            end imgui.SameLine() imgui.Text(u8" пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ [/reoff]")
+            end imgui.SameLine() imgui.Text(u8" Вийти з рекона [/reoff]")
 			local tLastTwo = {}
 			if imguiad.HotKey("##ActiveTwo", ofHotkeys.whEnabled, tLastTwo, 100) then
                 rkeys.changeHotKey(BindwhEnabled, ofHotkeys.whEnabled.v)					
 				cfg.whEnabled = deepcopy(ofHotkeys.whEnabled.v)
 				luasave()
-			end imgui.SameLine() imgui.Text(u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ WallHack')
+			end imgui.SameLine() imgui.Text(u8'Активація WallHack')
             local tLastThree = {}
             if imguiad.HotKey("##ActiveThree", ofHotkeys.openHomeWindow, tLastThree, 100) then
                 rkeys.changeHotKey(BindopenHomeWindow, ofHotkeys.openHomeWindow.v)					
 				cfg.openHomeWindow = deepcopy(ofHotkeys.openHomeWindow.v)
 				luasave()
-			end  imgui.SameLine() imgui.Text(u8'ВіпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ')
+			end  imgui.SameLine() imgui.Text(u8'Відкрити основне вікно')
             local tLastFour = {}
             if imguiad.HotKey("##ActiveFour", ofHotkeys.openAutoReport, tLastFour, 100) then
 				rkeys.changeHotKey(BindopenAutoReport, ofHotkeys.openAutoReport.v)					
 				cfg.openAutoReport = deepcopy(ofHotkeys.openAutoReport.v)
 				luasave()
-			end imgui.SameLine() imgui.Text(u8'ВіпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅ')
+			end imgui.SameLine() imgui.Text(u8'Відкрити авто-репорт')
             local tLastFive = {}
             if imguiad.HotKey("##ActiveFive", ofHotkeys.enabledTracers, tLastFive, 100) then
 				rkeys.changeHotKey(BindenabledTracers, ofHotkeys.enabledTracers.v)					
 				cfg.enabledTracers = deepcopy(ofHotkeys.enabledTracers.v)
 				luasave()
-            end imgui.SameLine() imgui.Text(u8'пїЅпїЅпїЅ/пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ')
+            end imgui.SameLine() imgui.Text(u8'Увм/вим трейсери куль')
         end
         if menuSelect == 3 then
-            if imgui.Checkbox(u8"ВіпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ/пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅ", elements.checkbox.showMyBullets) then
+            if imgui.Checkbox(u8"Відображати/Не відображати свої кулі", elements.checkbox.showMyBullets) then
                 HLcfg.config.showMyBullets = elements.checkbox.showMyBullets.v
                 save()
             end 
             imgui.Separator()
             if elements.checkbox.showMyBullets.v then
-                if imgui.CollapsingHeader(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ") then
+                if imgui.CollapsingHeader(u8"Налаштувати трейсер своїх куль") then
 
 
                     imgui.Separator()
@@ -1847,11 +1846,11 @@ function imgui.OnDrawFrame()
                     if imgui.SliderInt("##bulletsMyTime", elements.int.secondToCloseTwo, 5, 15) then
                         HLcfg.config.secondToCloseTwo = elements.int.secondToCloseTwo.v
                         save()
-                    end imgui.SameLine() imgui.Text(u8"пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
+                    end imgui.SameLine() imgui.Text(u8"Час затримки трейсера")
                     if imgui.SliderInt("##renderWidthLinesTwo", elements.int.widthRenderLineTwo, 1, 10) then
                         HLcfg.config.widthRenderLineTwo = elements.int.widthRenderLineTwo.v
                         save()
-                    end imgui.SameLine() imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ")
+                    end imgui.SameLine() imgui.Text(u8"Товщина ліній")
                     if imgui.SliderInt('##maxMyBullets', elements.int.maxMyLines, 10, 300) then
                         bulletSyncMy.maxLines = elements.int.maxMyLines.v
                         bulletSyncMy = {lastId = 0, maxLines = elements.int.maxMyLines.v}
@@ -1860,11 +1859,11 @@ function imgui.OnDrawFrame()
                         end
                         HLcfg.config.maxMyLines = elements.int.maxMyLines.v
                         save()
-                    end imgui.SameLine() imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ")
+                    end imgui.SameLine() imgui.Text(u8"Максимальна кількість ліній")
 
                     imgui.Separator()
 
-                    if imgui.Checkbox(u8"[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ##1", elements.checkbox.cbEndMy) then
+                    if imgui.Checkbox(u8"[Увм/вим] Закінчення у трейсерів##1", elements.checkbox.cbEndMy) then
                         HLcfg.config.cbEndMy = elements.checkbox.cbEndMy.v
                         save()
                     end
@@ -1872,51 +1871,51 @@ function imgui.OnDrawFrame()
                     if imgui.SliderInt('##sizeTraicerEnd', elements.int.sizeOffPolygon, 1, 10) then
                         HLcfg.config.sizeOffPolygon = elements.int.sizeOffPolygon.v
                         save()
-                    end  imgui.SameLine() imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
+                    end  imgui.SameLine() imgui.Text(u8"Розмір закінчення трейсера")
                     if imgui.SliderInt('##endNumbers', elements.int.polygonNumber, 2, 10) then
                         HLcfg.config.polygonNumber = elements.int.polygonNumber.v 
                         save()
-                    end imgui.SameLine() imgui.Text(u8"КіпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
+                    end imgui.SameLine() imgui.Text(u8"Кількість кутів на закінчення")
                     if imgui.SliderInt('##rotationOne', elements.int.rotationPolygonOne, 0, 360) then
                         HLcfg.config.rotationPolygonOne = elements.int.rotationPolygonOne.v
                         save()
-                    end imgui.SameLine() imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
+                    end imgui.SameLine() imgui.Text(u8"Градус повороту закінчення")
 
 
                     imgui.PopItemWidth()
                     imgui.Separator()
-                    imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ: ")
+                    imgui.Text(u8"Вкажіть колір трейсера, якщо ви попали у: ")
                     if imgui.ColorEdit4("##dinamicObjectMy", dinamicObjectMy) then
                         HLcfg.config.dinamicObjectMy = join_argb(dinamicObjectMy.v[1] * 255, dinamicObjectMy.v[2] * 255, dinamicObjectMy.v[3] * 255, dinamicObjectMy.v[4] * 255)
                         save()
-                    end imgui.SameLine() imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ'пїЅпїЅпїЅ")
+                    end imgui.SameLine() imgui.Text(u8"Динамічний об'єкт")
                     if imgui.ColorEdit4("##staticObjectMy", staticObjectMy) then
                         HLcfg.config.staticObjectMy = join_argb(staticObjectMy.v[1] * 255, staticObjectMy.v[2] * 255, staticObjectMy.v[3] * 255, staticObjectMy.v[4] * 255)
                         save()
-                    end imgui.SameLine() imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ'пїЅпїЅпїЅ")
+                    end imgui.SameLine() imgui.Text(u8"Статичний об'єкт")
                     if imgui.ColorEdit4("##pedMy", pedPMy) then
                         HLcfg.config.pedPMy = join_argb(pedPMy.v[1] * 255, pedPMy.v[2] * 255, pedPMy.v[3] * 255, pedPMy.v[4] * 255)
                         save()
-                    end imgui.SameLine() imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅ")
+                    end imgui.SameLine() imgui.Text(u8"Гравця")
                     if imgui.ColorEdit4("##carMy", carPMy) then
                         HLcfg.config.carPMy = join_argb(carPMy.v[1] * 255, carPMy.v[2] * 255, carPMy.v[3] * 255, carPMy.v[4] * 255)
                         save()
-                    end imgui.SameLine() imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅ")
+                    end imgui.SameLine() imgui.Text(u8"Автівку")
                     imgui.PopItemWidth()
                     imgui.Separator()
                 end
             end 
-            if imgui.CollapsingHeader(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ") then
+            if imgui.CollapsingHeader(u8"Налаштувати трейсер чужих куль") then
                 imgui.Separator()
                 imgui.PushItemWidth(175)
                 if imgui.SliderInt("##secondsBullets", elements.int.secondToClose, 5, 15) then
                     HLcfg.config.secondToClose = elements.int.secondToClose.v
                     save()
-                end imgui.SameLine() imgui.Text(u8"пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
+                end imgui.SameLine() imgui.Text(u8"Час затримки трейсера")
                 if imgui.SliderInt("##renderWidthLinesOne", elements.int.widthRenderLineOne, 1, 10) then
                     HLcfg.config.widthRenderLineOne = elements.int.widthRenderLineOne.v
                     save()
-                end imgui.SameLine() imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ")
+                end imgui.SameLine() imgui.Text(u8"Товщина ліній")
                 if imgui.SliderInt('##numberNotMyBullet', elements.int.maxNotMyLines, 10, 300) then
                     bulletSync.maxNotMyLines = elements.int.maxNotMyLines.v
                     bulletSync = {lastId = 0, maxLines = elements.int.maxNotMyLines.v}
@@ -1925,11 +1924,11 @@ function imgui.OnDrawFrame()
                     end
                     HLcfg.config.maxNotMyLines = elements.int.maxNotMyLines.v
                     save()
-                end imgui.SameLine() imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ")
+                end imgui.SameLine() imgui.Text(u8"Максимальна кількість ліній")
 
                 imgui.Separator()
 
-                if imgui.Checkbox(u8"[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ##2", elements.checkbox.cbEnd) then
+                if imgui.Checkbox(u8"[Увм/вим] Закінчення у трейсерів##2", elements.checkbox.cbEnd) then
                     HLcfg.config.cbEnd = elements.checkbox.cbEnd.v
                     save()
                 end
@@ -1937,176 +1936,176 @@ function imgui.OnDrawFrame()
                 if imgui.SliderInt('##sizeTraicerEndTwo', elements.int.sizeOffPolygonTwo, 1, 10) then
                     HLcfg.config.sizeOffPolygonTwo = elements.int.sizeOffPolygonTwo.v
                     save()
-                end imgui.SameLine() imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
+                end imgui.SameLine() imgui.Text(u8"Розмір закінчення трейсера")
 
                 if imgui.SliderInt('##endNumbersTwo', elements.int.polygonNumberTwo, 2, 10) then
                     HLcfg.config.polygonNumberTwo = elements.int.polygonNumberTwo.v 
                     save()
-                end imgui.SameLine() imgui.Text(u8"КіпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
+                end imgui.SameLine() imgui.Text(u8"Кількість кутів на закінчення")
 
                 if imgui.SliderInt('##rotationTwo', elements.int.rotationPolygonTwo, 0, 360) then
                     HLcfg.config.rotationPolygonTwo = elements.int.rotationPolygonTwo.v
                     save() 
-                end imgui.SameLine() imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
+                end imgui.SameLine() imgui.Text(u8"Градус повороту закінчення")
 
                 imgui.PopItemWidth()
                 imgui.Separator()
-                imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ: ")
+                imgui.Text(u8"Укажіть колір трейсера, якщо гравець попав у: ")
                 imgui.PushItemWidth(325)
                 if imgui.ColorEdit4("##dinamicObject", dinamicObject) then
                     HLcfg.config.dinamicObject = join_argb(dinamicObject.v[1] * 255, dinamicObject.v[2] * 255, dinamicObject.v[3] * 255, dinamicObject.v[4] * 255)
                     save()
-                end imgui.SameLine() imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ'пїЅпїЅпїЅ")
+                end imgui.SameLine() imgui.Text(u8"Динамічний об'єкт")
                 if imgui.ColorEdit4("##staticObject", staticObject) then
                     HLcfg.config.staticObject = join_argb(staticObject.v[1] * 255, staticObject.v[2] * 255, staticObject.v[3] * 255, staticObject.v[4] * 255)
                     save()
-                end imgui.SameLine() imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ'пїЅпїЅпїЅ")
+                end imgui.SameLine() imgui.Text(u8"Статичний об'єкт")
                 if imgui.ColorEdit4("##ped", pedP) then
                     HLcfg.config.pedP = join_argb(pedP.v[1] * 255, pedP.v[2] * 255, pedP.v[3] * 255, pedP.v[4] * 255)
                     save()
-                end imgui.SameLine() imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅ")
+                end imgui.SameLine() imgui.Text(u8"Гравця")
                 if imgui.ColorEdit4("##car", carP) then
                     HLcfg.config.carP = join_argb(carP.v[1] * 255, carP.v[2] * 255, carP.v[3] * 255, carP.v[4] * 255)
                     save()
-                end imgui.SameLine() imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅ")
+                end imgui.SameLine() imgui.Text(u8"Автівку")
                 imgui.PopItemWidth()
                 imgui.Separator()
             end 
         end
         if menuSelect == 4 then
             if elements.checkbox.enableCheckerPlayer.v then
-                if imgui.Button(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ", imgui.ImVec2(452, 0)) then
+                if imgui.Button(u8"Встановити нові координати чекеру", imgui.ImVec2(452, 0)) then
                     AdminTools.v = false
                     checkerCoords = true
-                    sampAddChatMessage('{FF0000}[GhostTools] {FF8C00}пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 1, пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 2.', stColor)
+                    sampAddChatMessage('{FF0000}[GhostTools] {FF8C00}Щоб підтвердити збереження – натисніть 1, щоб скасувати збереження – натисніть 2.', stColor)
                 end
             end
-            if imgui.Checkbox(u8"[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅпїЅ", elements.checkbox.enableCheckerPlayer) then
+            if imgui.Checkbox(u8"[Увм/вим] Чекер", elements.checkbox.enableCheckerPlayer) then
                 HLcfg.config.enableCheckerPlayer = elements.checkbox.enableCheckerPlayer.v
                 save()
             end
             for k, v in ipairs(playersList) do
                 imgui.Text(u8(v))
                 imgui.SameLine()
-                if imgui.Button(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ##"..k) then
+                if imgui.Button(u8"Видалити##"..k) then
                   table.remove(playersList, k)
                 end
             end
             imgui.PushItemWidth(130)
-            imgui.InputText(u8"пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ", tableOfNew.addInBuffer)
+            imgui.InputText(u8"Введіть нік", tableOfNew.addInBuffer)
             imgui.PopItemWidth()
             imgui.SameLine()
-            if imgui.Button(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ") then
+            if imgui.Button(u8"Добавити") then
                 table.insert(playersList, u8:decode(tableOfNew.addInBuffer.v))
             end
         end
         if menuSelect == 5 then
-            if imgui.Checkbox(u8'[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅпїЅ', elements.putStatis.nameStatis) then
+            if imgui.Checkbox(u8'[Увм/вим] Назва', elements.putStatis.nameStatis) then
                 HLcfg.statAdmin.nameStatis = elements.putStatis.nameStatis.v
                 save()
             end
-            if imgui.Checkbox(u8'[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ', elements.putStatis.centerText) then
+            if imgui.Checkbox(u8'[Увм/вим] Центрування тексту', elements.putStatis.centerText) then
                 HLcfg.statAdmin.centerText = elements.putStatis.centerText.v
                 save()
             end
-            if imgui.Checkbox(u8'[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ', elements.putStatis.showId) then
+            if imgui.Checkbox(u8'[Увм/вим] Показувати ІД', elements.putStatis.showId) then
                 HLcfg.statAdmin.showId = elements.putStatis.showId.v
                 save()
             end
-            if imgui.Checkbox(u8'[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ', elements.putStatis.showPing) then
+            if imgui.Checkbox(u8'[Увм/вим] Показувати пінга', elements.putStatis.showPing) then
                 HLcfg.statAdmin.showPing = elements.putStatis.showPing.v
                 save()
             end
-            if imgui.Checkbox(u8'[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ', elements.putStatis.showHealth) then
+            if imgui.Checkbox(u8'[Увм/вим] Показувати ХП', elements.putStatis.showHealth) then
                 HLcfg.statAdmin.showHealth = elements.putStatis.showHealth.v
                 save()
             end
-            if imgui.Checkbox(u8'[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ', elements.putStatis.showFormDay) then
+            if imgui.Checkbox(u8'[Увм/вим] Показувати форми за день', elements.putStatis.showFormDay) then
                 HLcfg.statAdmin.showFormDay = elements.putStatis.showFormDay.v
                 save()
             end
-            if imgui.Checkbox(u8'[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ', elements.putStatis.showFormSession) then
+            if imgui.Checkbox(u8'[Увм/вим] Показувати форми за сеанс', elements.putStatis.showFormSession) then
                 HLcfg.statAdmin.showFormSession = elements.putStatis.showFormSession.v
                 save()
             end
-            if imgui.Checkbox(u8'[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ', elements.putStatis.showReportDay) then
+            if imgui.Checkbox(u8'[Увм/вим] Показувати репорти за день', elements.putStatis.showReportDay) then
                 HLcfg.statAdmin.showReportDay = elements.putStatis.showReportDay.v
                 save()
             end
-            if imgui.Checkbox(u8'[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ', elements.putStatis.showReportSession) then
+            if imgui.Checkbox(u8'[Увм/вим] Показувати репорти за сеанс', elements.putStatis.showReportSession) then
                 HLcfg.statAdmin.showReportSession = elements.putStatis.showReportSession.v 
                 save()
             end
-            if imgui.Checkbox(u8"[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ'пїЅпїЅ", elements.putStatis.showInterior) then
+            if imgui.Checkbox(u8"[Увм/вим] Показувати інтер'єр", elements.putStatis.showInterior) then
                HLcfg.statAdmin.showInterior = elements.putStatis.showInterior.v
                save() 
             end
-            if imgui.Checkbox(u8'[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ', elements.putStatis.showOnlineDay) then
+            if imgui.Checkbox(u8'[Увм/вим] Показувати відіграний час за день', elements.putStatis.showOnlineDay) then
                 HLcfg.statAdmin.showOnlineDay = elements.putStatis.showOnlineDay.v
                 save()
             end
-            if imgui.Checkbox(u8'[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ', elements.putStatis.showOnlineSession) then
+            if imgui.Checkbox(u8'[Увм/вим] Показувати відіграний час за сеанс', elements.putStatis.showOnlineSession) then
                 HLcfg.statAdmin.showOnlineSession = elements.putStatis.showOnlineSession.v
                 save()
             end
-            if imgui.Checkbox(u8'[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ', elements.putStatis.showAfkDay) then
+            if imgui.Checkbox(u8'[Увм/вим] Показувати АФК за день', elements.putStatis.showAfkDay) then
                 HLcfg.statAdmin.showAfkDay = elements.putStatis.showAfkDay.v
                 save()
             end
-            if imgui.Checkbox(u8'[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ', elements.putStatis.showAfkSession) then
+            if imgui.Checkbox(u8'[Увм/вим] Показувати АФК за сеанс', elements.putStatis.showAfkSession) then
                 HLcfg.statAdmin.showAfkSession = elements.putStatis.showAfkSession.v
                 save()
             end
-            if imgui.Checkbox(u8'[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ', elements.putStatis.showTime) then
+            if imgui.Checkbox(u8'[Увм/вим] Показувати час', elements.putStatis.showTime) then
                 HLcfg.statAdmin.showTime = elements.putStatis.showTime.v
                 save()
             end
-            if imgui.Checkbox(u8'[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ', elements.putStatis.showTopDate) then
+            if imgui.Checkbox(u8'[Увм/вим] Показати дату', elements.putStatis.showTopDate) then
                 HLcfg.statAdmin.showTopDate = elements.putStatis.showTopDate.v
                 save()
             end
         end
         if menuSelect == 6 then
-            if imgui.Checkbox(u8"[пїЅпїЅпїЅ/пїЅпїЅпїЅ] пїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", elements.checkbox.enableAutoReport) then
+            if imgui.Checkbox(u8"[Увм/вим] Авто-відповідач", elements.checkbox.enableAutoReport) then
                 HLcfg.config.enableAutoReport = elements.checkbox.enableAutoReport.v
                 save() 
             end
-            imgui.Text(u8"пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ!!!")
-            imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ:")
+            imgui.Text(u8"АВТО-ОТВЕТЧИК НЕ РАБОТАЕТ КОРЕКТНО!!! НЕ ВКЛЮЧАЙТЕ!")
+            imgui.Text(u8"Введіть текст, який потрібно шукати в репорті:")
             imgui.PushItemWidth(400)
-            if imgui.NewInputText(u8'##SearchText', elements.input.textFindAutoReport, 455, u8"пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.", 2) then
+            if imgui.NewInputText(u8'##SearchText', elements.input.textFindAutoReport, 455, u8"Сюди необхідно ввести текст, який шукатиметься.", 2) then
                 HLcfg.config.textFindAutoReport = elements.input.textFindAutoReport.v
                 save()
             end
             imgui.PopItemWidth()
-            imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ:")
+            imgui.Text(u8"Введіть текст для відповіді:")
             imgui.PushItemWidth(400)
-            if imgui.NewInputText(u8'##SearchBar', elements.input.answerAutoReport, 455, u8"пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.", 2) then
+            if imgui.NewInputText(u8'##SearchBar', elements.input.answerAutoReport, 455, u8"Сюди потрібно ввести текст для відповіді.", 2) then
                 HLcfg.config.answerAutoReport = elements.input.answerAutoReport.v
                 save()
             end
             imgui.PopItemWidth()
         end
         if menuSelect == 7 then
-            imgui.Text(u8"пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ B, пїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ..")
+            imgui.Text(u8"Щоб перегортати чат, натисніть клавішу B, а потім крутіть коліщатко миші..")
             local buttonActivBubbleChat = {}
 			if imguiad.HotKey("##ofOne", ofHotkeys.activeChatBubble, buttonActivBubbleChat, 100) then
 				rkeys.changeHotKey(BindactiveChatBubble, ofHotkeys.activeChatBubble.v)
                 HLcfg.config.activeChatBubble = encodeJson(ofHotkeys.activeChatBubble.v)
                 save()
-            end imgui.SameLine() imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ.")
-            if imgui.Button(u8"пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ", imgui.ImVec2(482, 0)) then
+            end imgui.SameLine() imgui.Text(u8"Виберіть клавішу для активації далекого адмінського чату.")
+            if imgui.Button(u8"Змінити розташування далекого чату", imgui.ImVec2(482, 0)) then
                 changeBubbleCoordinates = true
                 AdminTools.v = false
-                sampAddChatMessage('{FF0000}[GhostTools] {FF8C00}пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ "1", пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ - "2".', stColor)
+                sampAddChatMessage('{FF0000}[GhostTools] {FF8C00}Щоб зберегти місце - натисніть "1", щоб скасувати зміну - "2".', stColor)
             end
             imgui.Separator()
-            imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ:")
+            imgui.Text(u8"Вкажіть максимальну кількість рядків у сторінці:")
             if imgui.SliderInt("##PrintInt", elements.int.limitPageSize, 5, 30) then
                 HLcfg.config.limitPageSize = elements.int.limitPageSize.v
                 save()
             end
-            imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ:")
+            imgui.Text(u8"Вкажіть максимальну кількість рядків:")
             if imgui.SliderInt("##maxPages", elements.int.maxPagesBubble, 100, 1000) then
                 HLcfg.config.maxPagesBubble = elements.int.maxPagesBubble.v
                 save()
@@ -2115,24 +2114,24 @@ function imgui.OnDrawFrame()
         end
         if menuSelect == 8 then
             imgui.SetWindowFontScale(1.0)
-            imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ:")
-            imgui.SetWindowFontScale(1.0)
+            imgui.Text(u8"Створити зброю:")
+            imgui.SetWindowFontScale(1.1)
             imgui.Separator()
-            imgui.Text(u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ:')
+            imgui.Text(u8'Виберіть зброю:')
             imgui.PushItemWidth(142)
             if imgui.Combo("##gunCreateFov", tableOfNew.numberGunCreate, arrGuns) then
                 HLcfg.config.numberGunCreate = tableOfNew.numberGunCreate.v 
                 save()
             end
             imgui.PopItemWidth()
-            imgui.Text(u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ:')
+            imgui.Text(u8'Виберіть кількість патронів:')
             imgui.SliderInt('##numberAmmo', numberAmmo, 1, 999)
-            if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ', imgui.ImVec2(100, 22)) then
+            if imgui.Button(u8'Створити', imgui.ImVec2(100, 22)) then
                 sampSendChat('/givegun '..getMyId()..' '..tableOfNew.numberGunCreate.v..' '..numberAmmo.v)
             end
             imgui.Separator()
-            imgui.SetWindowFontScale(1.0)
-            imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ:")
+            imgui.SetWindowFontScale(1.1)
+            imgui.Text(u8"Частовживана зброя:")
             imgui.SetWindowFontScale(1.0)
             for k,v in pairs(allGunsP) do
                 if imgui.Button(u8(v), imgui.ImVec2(100, 0)) then
@@ -2145,22 +2144,22 @@ function imgui.OnDrawFrame()
         if menuSelect == 9 then
             local tt = 0
             imgui.SetWindowFontScale(1.1)
-            imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ:")
+            imgui.Text(u8"Створити авто:")
             imgui.SetWindowFontScale(1.0)
             imgui.Separator()
             imgui.Columns(3, _, false)
-            imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ:")
+            imgui.Text(u8"Виберіть авто:")
             imgui.PushItemWidth(142)
             if imgui.Combo("##car", tableOfNew.intComboCar, tCarsName) then
                 HLcfg.config.intComboCar = tableOfNew.intComboCar.v
                 save()
             end
             imgui.PopItemWidth()
-            if imgui.Button(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", imgui.ImVec2(141, 22)) then
+            if imgui.Button(u8"Створити", imgui.ImVec2(141, 22)) then
                 sampSendChat("/veh " .. tableOfNew.intComboCar.v + 400 .. " 1 1")
             end
             imgui.NextColumn()
-            imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ:")
+            imgui.Text(u8"Виберіть колір:")
             imgui.AlignTextToFramePadding()
             imgui.Text("#1"); imgui.SameLine();
             imgui.PushItemWidth(80)
@@ -2180,15 +2179,15 @@ function imgui.OnDrawFrame()
             imgui.NextColumn()
             imgui.PushStyleVar(imgui.StyleVar.ItemSpacing, imgui.ImVec2(1.0, 3.1))
             imgui.Text(u8("ID: " .. tableOfNew.intComboCar.v + 400))
-            imgui.Text(u8("пїЅпїЅпїЅпїЅ: " .. tCarsName[tableOfNew.intComboCar.v + 1]))
+            imgui.Text(u8("Авто: " .. tCarsName[tableOfNew.intComboCar.v + 1]))
             local carId = tableOfNew.intComboCar.v + 1
             local type = tCarsType[carId]
-            imgui.Text(u8("пїЅпїЅпїЅ: " .. tCarsTypeName[type]))
+            imgui.Text(u8("Тип: " .. tCarsTypeName[type]))
             imgui.PopStyleVar()
             imgui.Columns(1)
             imgui.Separator()
             imgui.SetWindowFontScale(1.1)
-            imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ:")
+            imgui.Text(u8"Частиковживані авто:")
             imgui.SetWindowFontScale(1.0)
             imgui.Separator()
             for k, v in pairs(allCarsP) do
@@ -2203,7 +2202,7 @@ function imgui.OnDrawFrame()
             imgui.NewLine()
 			imgui.BeginChild('##createCar', imgui.ImVec2(463, 300), true)
 			imgui.PushItemWidth(250)
-			imgui.NewInputText(u8'##SearchBar', tableOfNew.findText, 444, u8"пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ", 2)
+			imgui.NewInputText(u8'##SearchBar', tableOfNew.findText, 444, u8"Пошук за списком", 2)
 			imgui.PopItemWidth()
 			imgui.Separator()
 			for k,v in pairs(tCarsName) do
@@ -2228,7 +2227,7 @@ function imgui.OnDrawFrame()
         imgui.SetNextWindowSize(imgui.ImVec2(w-x, h), imgui.Cond.FirstUseEver)
 		imgui.Begin(u8"##pensBar", _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove + imgui.WindowFlags.NoTitleBar)
 		imgui.SetWindowFontScale(1.1)
-		imgui.Text(u8"пїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅ:")
+		imgui.Text(u8"Адм-довідка:")
 		imgui.SetWindowFontScale(1.0)
 		imgui.Separator()
 		local _, hb = ToScreen(_, 416)
@@ -2242,22 +2241,29 @@ function imgui.OnDrawFrame()
 		imgui.EndChild()
 		imgui.End()
     end 
-    if tableOfNew.commandsAdmins.v then    
-        imgui.SetNextWindowSize(imgui.ImVec2(250, 400), imgui.Cond.FirstUseEver)
-		imgui.SetNextWindowPos(imgui.ImVec2(ex / 2 - 600, ey / 2 - 50), imgui.Cond.FirstUseEver)
-        imgui.Begin(u8"##admBar", _, nil, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
-        imgui.SetWindowFontScale(1.0)
-        imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅ:")
-        imgui.Separator() 
-        imgui.Text(u8(admTable))  
-        imgui.Separator()
-        imgui.End()
+    if tableOfNew.commandsAdmins.v then
+        imgui.PushItemWidth(142)
+            if imgui.Combo("##admBar", tableOfNew.numberGunCreate, arrGuns) then
+                HLcfg.config.numberGunCreate = tableOfNew.numberGunCreate.v 
+                save()
+            end
+        imgui.PopItemWidth()
+		imgui.Text(u8"Команди скрипту:")
+		imgui.SetWindowFontScale(1.0)
+		imgui.Separator()
+		local _, hb = ToScreen(_, 416)
+		imgui.BeginChild("##adm", imgui.ImVec2(w-x-2, hb))
+		imgui.Columns(2, _, false)
+		imgui.SetColumnWidth(-1, 255)
+		imgui.Text(u8(admTable))
+		imgui.EndChild()
+		imgui.End()
     end
     if tableOfNew.tempLeader.v then
         imgui.SetNextWindowSize(imgui.ImVec2(250, 400), imgui.Cond.FirstUseEver)
 		imgui.SetNextWindowPos(imgui.ImVec2(ex / 2 - 600, ey / 2 - 50), imgui.Cond.FirstUseEver)
-		imgui.Begin(u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ', nil, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
-		if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ', imgui.ImVec2(225, 0)) then
+		imgui.Begin(u8'Тимчасово вступ у організацію', nil, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
+		if imgui.Button(u8'Покинути організацію', imgui.ImVec2(225, 0)) then
 			sampSendChat('/temporg 0')
 		end
 		for k,v in ipairs(tempLeaders) do
@@ -2293,33 +2299,33 @@ function imgui.OnDrawFrame()
         end
         imgui.SetNextWindowPos(imgui.ImVec2(HLcfg.config.posX, HLcfg.config.posY), imgui.Cond.FirsUseEver, imgui.ImVec2(0.5, 0.5))
         if elements.putStatis.nameStatis.v then
-		    imgui.Begin(u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ', nil, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove + imgui.WindowFlags.NoCollapse + imgui.WindowFlags.AlwaysAutoResize)
+		    imgui.Begin(u8'Статистика', nil, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove + imgui.WindowFlags.NoCollapse + imgui.WindowFlags.AlwaysAutoResize)
         else
-            imgui.Begin(u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ', nil, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove + imgui.WindowFlags.NoCollapse + imgui.WindowFlags.AlwaysAutoResize + imgui.WindowFlags.NoTitleBar)
+            imgui.Begin(u8'Статистика', nil, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove + imgui.WindowFlags.NoCollapse + imgui.WindowFlags.AlwaysAutoResize + imgui.WindowFlags.NoTitleBar)
         end
-        if not allNotTrueBool then --[[пїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ]]
-            if elements.putStatis.showId.v then if elements.putStatis.centerText.v then imgui.centeredText(u8'пїЅпїЅ: '..getMyId()) else imgui.Text(u8"пїЅпїЅ: "..getMyId()) end end
-            if elements.putStatis.showPing.v then if elements.putStatis.centerText.v then imgui.centeredText(u8'ПіпїЅпїЅ: '..sampGetPlayerPing(getMyId())) else imgui.Text(u8"ПіпїЅпїЅ: "..sampGetPlayerPing(getMyId())) end end
-            if elements.putStatis.showHealth.v then if elements.putStatis.centerText.v then imgui.centeredText(u8'пїЅпїЅ: '..sampGetPlayerHealth(getMyId())) else imgui.Text(u8'пїЅпїЅ: '..sampGetPlayerHealth(getMyId())) end end 
-            if elements.putStatis.showFormDay.v then if elements.putStatis.centerText.v then imgui.centeredText(u8'пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ: '..HLcfg.config.dayForms) else imgui.Text(u8"пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ: "..HLcfg.config.dayForms) end end
-            if elements.putStatis.showFormSession.v then if elements.putStatis.centerText.v then imgui.centeredText(u8'пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ: '..LsessionForma) else imgui.Text(u8'пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ: '..LsessionForma) end end 
-            if elements.putStatis.showReportDay.v then if elements.putStatis.centerText.v then imgui.centeredText(u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ: '..HLcfg.config.dayReports) else imgui.Text(u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ: '..HLcfg.config.dayReports) end end 
-            if elements.putStatis.showReportSession.v then if elements.putStatis.centerText.v then imgui.centeredText(u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ: '..LsessionReport) else imgui.Text(u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ: '..LsessionReport) end end
-            if elements.putStatis.showInterior.v then if elements.putStatis.centerText.v then imgui.centeredText(u8(getCharActiveInterior(playerPed) == 0 and 'пїЅпїЅ пїЅпїЅ пїЅ пїЅпїЅпїЅ' or 'пїЅпїЅпїЅпїЅ: '..getCharActiveInterior(playerPed))) else imgui.Text(u8(getCharActiveInterior(playerPed) == 0 and 'пїЅпїЅ пїЅпїЅ пїЅ пїЅпїЅпїЅ' or 'пїЅпїЅпїЅпїЅ: '..getCharActiveInterior(playerPed))) end end
-            if elements.putStatis.showOnlineSession.v then if elements.putStatis.centerText.v then imgui.centeredText(u8'пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ: '..get_clock(sessionOnline.v)) else imgui.Text(u8'пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ: '..get_clock(sessionOnline.v)) end end
-            if elements.putStatis.showOnlineDay.v then if elements.putStatis.centerText.v then imgui.centeredText(u8'пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ: '..get_clock(HLcfg.onDay.online)) else imgui.Text(u8'пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ: '..get_clock(HLcfg.onDay.online)) end end
-            if elements.putStatis.showAfkSession.v then if elements.putStatis.centerText.v then imgui.centeredText(u8'пїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ: '..get_clock(sessionAfk.v)) else imgui.Text(u8'пїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ: '..get_clock(sessionAfk.v)) end end
-            if elements.putStatis.showAfkDay.v then if elements.putStatis.centerText.v then imgui.centeredText(u8'пїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ: '..get_clock(HLcfg.onDay.afk)) else imgui.Text(u8'пїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ: '..get_clock(HLcfg.onDay.afk)) end end
+        if not allNotTrueBool then --[[Если все выключено то]]
+            if elements.putStatis.showId.v then if elements.putStatis.centerText.v then imgui.centeredText(u8'ІД: '..getMyId()) else imgui.Text(u8"ІД: "..getMyId()) end end
+            if elements.putStatis.showPing.v then if elements.putStatis.centerText.v then imgui.centeredText(u8'Пінг: '..sampGetPlayerPing(getMyId())) else imgui.Text(u8"Пінг: "..sampGetPlayerPing(getMyId())) end end
+            if elements.putStatis.showHealth.v then if elements.putStatis.centerText.v then imgui.centeredText(u8'ХП: '..sampGetPlayerHealth(getMyId())) else imgui.Text(u8'ХП: '..sampGetPlayerHealth(getMyId())) end end 
+            if elements.putStatis.showFormDay.v then if elements.putStatis.centerText.v then imgui.centeredText(u8'Форм за день: '..HLcfg.config.dayForms) else imgui.Text(u8"Форм за день: "..HLcfg.config.dayForms) end end
+            if elements.putStatis.showFormSession.v then if elements.putStatis.centerText.v then imgui.centeredText(u8'Форм за сеанс: '..LsessionForma) else imgui.Text(u8'Форм за сеанс: '..LsessionForma) end end 
+            if elements.putStatis.showReportDay.v then if elements.putStatis.centerText.v then imgui.centeredText(u8'Репортів за день: '..HLcfg.config.dayReports) else imgui.Text(u8'Репортів за день: '..HLcfg.config.dayReports) end end 
+            if elements.putStatis.showReportSession.v then if elements.putStatis.centerText.v then imgui.centeredText(u8'Репортів за сеанс: '..LsessionReport) else imgui.Text(u8'Репортів за сеанс: '..LsessionReport) end end
+            if elements.putStatis.showInterior.v then if elements.putStatis.centerText.v then imgui.centeredText(u8(getCharActiveInterior(playerPed) == 0 and 'Ви не в інті' or 'Інта: '..getCharActiveInterior(playerPed))) else imgui.Text(u8(getCharActiveInterior(playerPed) == 0 and 'Ви не в інті' or 'Інта: '..getCharActiveInterior(playerPed))) end end
+            if elements.putStatis.showOnlineSession.v then if elements.putStatis.centerText.v then imgui.centeredText(u8'Онлайн за сеанс: '..get_clock(sessionOnline.v)) else imgui.Text(u8'Онлайн за сеанс: '..get_clock(sessionOnline.v)) end end
+            if elements.putStatis.showOnlineDay.v then if elements.putStatis.centerText.v then imgui.centeredText(u8'Онлайн за день: '..get_clock(HLcfg.onDay.online)) else imgui.Text(u8'Онлайн за день: '..get_clock(HLcfg.onDay.online)) end end
+            if elements.putStatis.showAfkSession.v then if elements.putStatis.centerText.v then imgui.centeredText(u8'АФК за сеанс: '..get_clock(sessionAfk.v)) else imgui.Text(u8'АФК за сеанс: '..get_clock(sessionAfk.v)) end end
+            if elements.putStatis.showAfkDay.v then if elements.putStatis.centerText.v then imgui.centeredText(u8'АФК за день: '..get_clock(HLcfg.onDay.afk)) else imgui.Text(u8'АФК за день: '..get_clock(HLcfg.onDay.afk)) end end
             if not pageState then
-                if elements.putStatis.showTime.v then if elements.putStatis.centerText.v then imgui.centeredText(u8(string.format(os.date("пїЅпїЅпїЅ: %H:%M:%S", os.time())))) else imgui.Text(u8(string.format(os.date("пїЅпїЅпїЅ: %H:%M:%S", os.time())))) end end
-                if elements.putStatis.showTopDate.v then if elements.putStatis.centerText.v then imgui.centeredText(u8(string.format(os.date("пїЅпїЅпїЅпїЅ: %d.%m.%y")))) else imgui.Text(u8(string.format(os.date("пїЅпїЅпїЅпїЅ: %d.%m.%y")))) end end
+                if elements.putStatis.showTime.v then if elements.putStatis.centerText.v then imgui.centeredText(u8(string.format(os.date("Час: %H:%M:%S", os.time())))) else imgui.Text(u8(string.format(os.date("Час: %H:%M:%S", os.time())))) end end
+                if elements.putStatis.showTopDate.v then if elements.putStatis.centerText.v then imgui.centeredText(u8(string.format(os.date("Дата: %d.%m.%y")))) else imgui.Text(u8(string.format(os.date("Дата: %d.%m.%y")))) end end
             else
                 if elements.putStatis.centerText.v then
                     imgui.centeredText(u8(os.date("%d.%m.%y | %H:%M:%S", os.time()))) else 
                         imgui.Text(u8(os.date("%d.%m.%y | %H:%M:%S", os.time()))) end
             end
         else
-            imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.")
+            imgui.Text(u8"Жодна функція не увімкнена.")
         end
 		imgui.End()
     end
@@ -2333,7 +2339,7 @@ function imgui.OnDrawFrame()
         end
         imgui.SetNextWindowPos(imgui.ImVec2(imgui.GetIO().DisplaySize.x / 2, imgui.GetIO().DisplaySize.y / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
         imgui.SetNextWindowSize(imgui.ImVec2(537, 450), imgui.Cond.FirstUseEver)	
-        imgui.Begin(u8'пїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅ', tableOfNew.AutoReport, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
+        imgui.Begin(u8'Авто-Репорт', tableOfNew.AutoReport, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
         imgui.BeginChild('##i_report', imgui.ImVec2(520, 30), true)		
         if #reports > 0 then
             imgui.PushTextWrapPos(500)
@@ -2345,40 +2351,40 @@ function imgui.OnDrawFrame()
         imgui.PushItemWidth(520)
         imgui.InputText(u8'##answer_input_report', tableOfNew.answer_report)
         imgui.PopItemWidth()
-        imgui.Text(u8'                                                          пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ')
+        imgui.Text(u8'                                                          Введіть відповідь')
         imgui.Separator()
-        if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ ID', imgui.ImVec2(100, 0)) then
+        if imgui.Button(u8'Працювати по ID', imgui.ImVec2(100, 0)) then
             if #reports > 0 then
                 if reports[1].textP:find('%d+') then
                     tableOfNew.AutoReport.v = false
                     imgui.ShowCursor = false
                     lua_thread.create(function()
                         local id = reports[1].textP:match('(%d+)')
-                        sampSendChat('/ans '..reports[1].id..' ВіпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ!')
+                        sampSendChat('/ans '..reports[1].id..' Вітаю, починаю роботу за вашою скаргою!')
                         wait(1000)
                         sampSendChat('/re '..id)
                         refresh_current_report()
                     end)
                 else
-                    sampAddChatMessage('{FF0000}[пїЅпїЅпїЅпїЅпїЅпїЅпїЅ] {FF8C00}пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ.', stColor)
+                    sampAddChatMessage('{FF0000}[Помилка] {FF8C00}У репорті відсутній ІД.', stColor)
                 end
             end
         end
         imgui.SameLine()
-        if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ', imgui.ImVec2(100, 0)) then
+        if imgui.Button(u8'Допомогти гравцю', imgui.ImVec2(100, 0)) then
             if #reports > 0 then
                 lua_thread.create(function()
                     tableOfNew.AutoReport.v = false
                     imgui.ShowCursor = false
                     sampSendChat('/goto '..reports[1].id)
                     wait(1000)
-                    sampSendChat('/ans '..reports[1].id..' ВіпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ!')		
+                    sampSendChat('/ans '..reports[1].id..' Вітаю, зараз спробую вам допомогти!')		
                     refresh_current_report()
                 end)
             end
         end
         imgui.SameLine()
-        if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ', imgui.ImVec2(100, 0)) then
+        if imgui.Button(u8'Слідкувати', imgui.ImVec2(100, 0)) then
             if #reports > 0 then
                 lua_thread.create(function()
                     tableOfNew.AutoReport.v = false
@@ -2386,18 +2392,18 @@ function imgui.OnDrawFrame()
                     sampSendChat('/re '..reports[1].id)
                     local pID = reports[1].id
                     wait(1000)
-                    sampSendChat('/ans '..pID..' ВіпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ!')
+                    sampSendChat('/ans '..pID..' Вітаю, починаю роботу за вашою скаргою!')
                     refresh_current_report()
                 end)
             end
         end
         imgui.SameLine()
-        if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ', imgui.ImVec2(100, 0)) then
+        if imgui.Button(u8'Передати', imgui.ImVec2(100, 0)) then
             if #reports > 0 then
                 lua_thread.create(function()
                     local bool = _sampSendChat(reports[1].nickname..'['..reports[1].id..']: '..reports[1].textP, 80)
                     wait(1000)
-                    sampSendChat('/ans '..reports[1].id..' ВіпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ.')
+                    sampSendChat('/ans '..reports[1].id..' Вітаю, передам вашу запит.')
                     refresh_current_report()
                 end)
             end
@@ -2414,34 +2420,34 @@ function imgui.OnDrawFrame()
         end
         imgui.PopStyleColor(3)
         imgui.Separator()
-        if imgui.Button(u8'пїЅпїЅ пїЅпїЅ пїЅпїЅ', imgui.ImVec2(100, 0)) then
+        if imgui.Button(u8'ЖБ на ФО', imgui.ImVec2(100, 0)) then
             if #reports > 0 then
-                sampSendChat('/ans '..reports[1].id..' ВіпїЅпїЅпїЅ, пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅ. пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.')
+                sampSendChat('/ans '..reports[1].id..' Вітаю, ви можете залишити свою скаргу на оф. форумі проєкту.')
                 refresh_current_report()
             end
         end imgui.SameLine()
-        if imgui.Button(u8'пїЅпїЅ пїЅпїЅпїЅпїЅдієпїЅпїЅ', imgui.ImVec2(100, 0)) then
+        if imgui.Button(u8'Не володіємо', imgui.ImVec2(100, 0)) then
             if #reports > 0 then
-                sampSendChat('/ans '..reports[1].id..' ВіпїЅпїЅпїЅ, пїЅпїЅ пїЅпїЅпїЅпїЅдієпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.')
+                sampSendChat('/ans '..reports[1].id..' Вітаю, не володіємо даною інформацією.')
                 refresh_current_report()
             end
         end imgui.SameLine()
-        if imgui.Button(u8'пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ', imgui.ImVec2(100, 0)) then
+        if imgui.Button(u8'РП шляхом', imgui.ImVec2(100, 0)) then
             if #reports > 0 then
-                sampSendChat('/ans '..reports[1].id..' ВіпїЅпїЅпїЅ, пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ. пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.') 
+                sampSendChat('/ans '..reports[1].id..' Вітаю, ви повинні дізнатися самостійно. РП шляхом.') 
                 refresh_current_report()
             end
         end imgui.SameLine()
-        if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ', imgui.ImVec2(100, 0)) then
+        if imgui.Button(u8'Приємної гри', imgui.ImVec2(100, 0)) then
             if #reports > 0 then
-                sampSendChat('/ans '..reports[1].id..' ВіпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ :).')
+                sampSendChat('/ans '..reports[1].id..' Вітаю, приємної гри на нашому сервері :).')
                 refresh_current_report()
             end
         end imgui.SameLine()
         imgui.Separator()
-        if imgui.Button(u8'ВіпїЅпїЅпїЅпїЅпїЅпїЅпїЅ', imgui.ImVec2(100, 0)) then
+        if imgui.Button(u8'Відповісти', imgui.ImVec2(100, 0)) then
             if tableOfNew.answer_report.v == '' then
-                sampAddChatMessage('{FF0000}[пїЅпїЅпїЅпїЅпїЅпїЅпїЅ] {FF8C00}пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.', stColor)
+                sampAddChatMessage('{FF0000}[Помилка] {FF8C00}Введіть коректну відповідь.', stColor)
             else
                 if #reports > 0 then
                     sampSendChat('/pm '..reports[1].id..' '..u8:decode(tableOfNew.answer_report.v))
@@ -2450,10 +2456,10 @@ function imgui.OnDrawFrame()
                 end
             end
         end imgui.SameLine() 
-        if imgui.Button(u8'пїЅпїЅ', imgui.ImVec2(100, 0)) then
+        if imgui.Button(u8'СП', imgui.ImVec2(100, 0)) then
             if #reports > 0 then
                 lua_thread.create(function()
-                    sampSendChat('/ans '..reports[1].id..' ВіпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ!')
+                    sampSendChat('/ans '..reports[1].id..' Вітаю, зараз спробую вам допомогти!')
                     wait(1000)
                     sampSendChat('/spawn '..reports[1].id)
                     refresh_current_report()
@@ -2469,26 +2475,26 @@ function imgui.OnDrawFrame()
                 }
             }
         end imgui.SameLine()
-        if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ', imgui.ImVec2(100, 0)) then
+        if imgui.Button(u8'Пропустити', imgui.ImVec2(100, 0)) then
             refresh_current_report()
         end
         imgui.Separator()
-        if imgui.BeginPopupModal(u8"пїЅпїЅпїЅпїЅпїЅпїЅ", _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove) then
-            if imgui.Button(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", imgui.ImVec2(175, 0)) then
+        if imgui.BeginPopupModal(u8"Оффтоп", _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove) then
+            if imgui.Button(u8"Зробити попередження", imgui.ImVec2(175, 0)) then
                 if #reports > 0 then
-                    sampSendChat("/ans "..reports[1].id.." ВіпїЅпїЅпїЅ, пїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.")
+                    sampSendChat("/ans "..reports[1].id.." Вітаю, у разі подальшого здійснення оффтопу - буде бан репорту.")
                     refresh_current_report()
                     imgui.CloseCurrentPopup()
                 end
             end
-            if imgui.Button(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", imgui.ImVec2(175, 0)) then
+            if imgui.Button(u8"Наказати", imgui.ImVec2(175, 0)) then
                 if #reports > 0 then
-                    sampSendChat("/rmute "..reports[1].id.." 10 пїЅпїЅпїЅпїЅпїЅпїЅ")
+                    sampSendChat("/rmute "..reports[1].id.." 10 Оффтоп")
                     refresh_current_report()
                     imgui.CloseCurrentPopup()
                 end
             end 
-            if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ', imgui.ImVec2(175, 0)) then
+            if imgui.Button(u8'Зачинити', imgui.ImVec2(175, 0)) then
                 imgui.CloseCurrentPopup()
             end
             imgui.EndPopup()
@@ -2570,7 +2576,7 @@ function imgui.OnDrawFrame()
         if imgui.Button(u8'History', bet) then
                 sampSendChat('/apenalty '..getNick(rInfo.id))
         end	imgui.SameLine()
-        if imgui.Button(u8'пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ', bet) then 
+        if imgui.Button(u8'До гравця', bet) then 
             lua_thread.create(function()
                 tpaid = rInfo.id
                 sampSendChat('/reoff')
@@ -2578,7 +2584,7 @@ function imgui.OnDrawFrame()
                 sampSendChat('/tpa '..tpaid)
             end)
         end imgui.SameLine()
-        if imgui.Button(u8'пїЅпїЅ пїЅпїЅпїЅпїЅ', bet) then
+        if imgui.Button(u8'До себе', bet) then
             lua_thread.create(function()
                 gethereId = rInfo.id
                 sampSendChat('/reoff')
@@ -2586,45 +2592,45 @@ function imgui.OnDrawFrame()
                 sampSendChat('/gethere '..rInfo.id)
             end)
         end imgui.SameLine()
-        if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ', bet) then 
+        if imgui.Button(u8'Звільнити', bet) then 
             sampSendChat('/auninvite '..rInfo.id)
         end imgui.SameLine()
-        if imgui.Button(u8'пїЅпїЅпїЅпїЅ', bet) then
-            imgui.OpenPopup(u8"пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ")
+        if imgui.Button(u8'Авто', bet) then
+            imgui.OpenPopup(u8"Видати авто")
         end imgui.SameLine()
-        if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅ', bet) then
-            imgui.OpenPopup(u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ')
+        if imgui.Button(u8'Зброя', bet) then
+            imgui.OpenPopup(u8'Виберіть зброю')
         end imgui.SameLine()
-        if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅ', bet) then
+        if imgui.Button(u8'Вихід', bet) then
             sampSendChat('/reoff')
         end
-        if imgui.BeginPopupModal(u8"пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ", _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove) then
-            imgui.Text(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ:")
+        if imgui.BeginPopupModal(u8"Видати авто", _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove) then
+            imgui.Text(u8"Виберіть транспорт:")
             imgui.PushItemWidth(142)
             imgui.Combo("##createiscarrecon", tableOfNew.intComboCar, tCarsName)
             imgui.PopItemWidth()
-            if imgui.Button(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", imgui.ImVec2(175, 0)) then
+            if imgui.Button(u8"Створити", imgui.ImVec2(175, 0)) then
                 sampSendChat("/veh " .. tableOfNew.intComboCar.v + 400 .. " 1 1")
             end
-            if imgui.Button(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", imgui.ImVec2(175, 0)) then
+            if imgui.Button(u8"Зачинити", imgui.ImVec2(175, 0)) then
                 imgui.CloseCurrentPopup()
             end
             imgui.EndPopup()
         end
-        if imgui.BeginPopupModal(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ", _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove) then
-            imgui.Text(u8'пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ-пїЅпїЅ пїЅпїЅ.')
+        if imgui.BeginPopupModal(u8"Виберіть зброю", _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove) then
+            imgui.Text(u8'Введіть кол-во пт.')
             imgui.InputText('##numbersAmmo', tableOfNew.inputAmmoBullets)
-            imgui.Text(u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ') 
+            imgui.Text(u8'Виберіть зброю') 
             imgui.Combo('##selecting', tableOfNew.selectGun, arrGuns)
-            if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅпїЅ', imgui.ImVec2(175, 0)) then
+            if imgui.Button(u8'Выдать', imgui.ImVec2(175, 0)) then
                 if tableOfNew.inputAmmoBullets.v ~= '' then
                     sampSendChat('/givegun '..rInfo.id..' '..tonumber(tableOfNew.selectGun.v)..' '..tableOfNew.inputAmmoBullets.v)
                     imgui.CloseCurrentPopup()
                 else
-                    sampAddChatMessage('{FF0000}[пїЅпїЅпїЅпїЅпїЅпїЅпїЅ] {FF8C00}пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ-пїЅпїЅ пїЅпїЅ.', stColor)
+                    sampAddChatMessage('{FF0000}[Помилка] {FF8C00}Введіть кол-во пт.', stColor)
                 end
             end
-            if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ', imgui.ImVec2(175, 0)) then
+            if imgui.Button(u8'Зачинити', imgui.ImVec2(175, 0)) then
                 imgui.CloseCurrentPopup()
             end
             imgui.EndPopup()
@@ -2632,25 +2638,25 @@ function imgui.OnDrawFrame()
         imgui.End()
         imgui.SetNextWindowPos(imgui.ImVec2(x, y - 150), imgui.Cond.FirstUseEver)
         imgui.SetNextWindowSize(imgui.ImVec2(137, 152), imgui.Cond.FirstUseEver)
-        imgui.Begin(u8"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoMove + imgui.WindowFlags.NoResize)
-        if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅпїЅ kick', imgui.ImVec2(120, 0)) then
-            imgui.OpenPopup(u8'пїЅпїЅпїЅпїЅпїЅпїЅ kick')
+        imgui.Begin(u8"Покарання", _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoMove + imgui.WindowFlags.NoResize)
+        if imgui.Button(u8'Видати kick', imgui.ImVec2(120, 0)) then
+            imgui.OpenPopup(u8'Видати kick')
         end
-        if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅпїЅ dm', imgui.ImVec2(120, 0)) then
-            imgui.OpenPopup(u8'пїЅпїЅпїЅпїЅпїЅпїЅ dm')
+        if imgui.Button(u8'Видати dm', imgui.ImVec2(120, 0)) then
+            imgui.OpenPopup(u8'Видати dm')
         end
-        if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅпїЅ warn', imgui.ImVec2(120, 0)) then
-            imgui.OpenPopup(u8'пїЅпїЅпїЅпїЅпїЅпїЅ warn')
+        if imgui.Button(u8'Видати warn', imgui.ImVec2(120, 0)) then
+            imgui.OpenPopup(u8'Видати warn')
         end
-        if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅпїЅ mute', imgui.ImVec2(120, 0)) then
-            imgui.OpenPopup(u8'пїЅпїЅпїЅпїЅпїЅпїЅ mute')
+        if imgui.Button(u8'Видати mute', imgui.ImVec2(120, 0)) then
+            imgui.OpenPopup(u8'Видати mute')
         end
-        if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅпїЅ ban', imgui.ImVec2(120, 0)) then
-            imgui.OpenPopup(u8'пїЅпїЅпїЅпїЅпїЅпїЅ ban')
+        if imgui.Button(u8'Видати ban', imgui.ImVec2(120, 0)) then
+            imgui.OpenPopup(u8'Видати ban')
         end	        
-        if imgui.BeginPopupModal(u8"пїЅпїЅпїЅпїЅпїЅпїЅ kick", _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove) then
+        if imgui.BeginPopupModal(u8"Видати kick", _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove) then
             bsize = imgui.ImVec2(130, 0)
-            if imgui.Button(u8'пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ', bsize) then
+            if imgui.Button(u8'Своя причина', bsize) then
                 sampSetChatInputEnabled(true)
                 sampSetChatInputText('/kick '..rInfo.id..' ')
                 imgui.CloseCurrentPopup()
@@ -2659,76 +2665,76 @@ function imgui.OnDrawFrame()
                 sampSendChat('/kick '..rInfo.id..' AFK w/o esc')
                 imgui.CloseCurrentPopup()
             end
-            if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅпїЅ', bsize) then
-                sampSendChat('/kick '..rInfo.id..' пїЅпїЅпїЅпїЅпїЅпїЅ')
+            if imgui.Button(u8'Завада', bsize) then
+                sampSendChat('/kick '..rInfo.id..' Завада')
                 imgui.CloseCurrentPopup()
             end
-            if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ', bsize) then
+            if imgui.Button(u8'Зачинити', bsize) then
                 imgui.CloseCurrentPopup()
             end
             imgui.EndPopup()
         end
-        if imgui.BeginPopupModal(u8"пїЅпїЅпїЅпїЅпїЅпїЅ dm", _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove) then
+        if imgui.BeginPopupModal(u8"Видати dm", _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove) then
             bsize = imgui.ImVec2(125, 0)
-            if imgui.Button(u8'пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ', bsize) then
+            if imgui.Button(u8'Своя причина', bsize) then
                 sampSetChatInputEnabled(true)
                 sampSetChatInputText('/dm '..rInfo.id..' ')
                 imgui.CloseCurrentPopup()
             end
-            if imgui.Button(u8'пїЅпїЅ', bsize) then
-                sampSendChat('/dm '..rInfo.id..' 60 пїЅпїЅ')
+            if imgui.Button(u8'ДМ', bsize) then
+                sampSendChat('/dm '..rInfo.id..' 60 ДМ')
                 imgui.CloseCurrentPopup()
             end
-            if imgui.Button(u8'пїЅпїЅ', bsize) then
-                sampSendChat('/dm '..rInfo.id..' 60 пїЅпїЅ')
+            if imgui.Button(u8'ДБ', bsize) then
+                sampSendChat('/dm '..rInfo.id..' 60 ДБ')
                 imgui.CloseCurrentPopup()
             end  
-            if imgui.Button(u8'пїЅпїЅ', bsize) then
-                sampSendChat('/dm '..rInfo.id..' 60 пїЅпїЅ')
+            if imgui.Button(u8'РК', bsize) then
+                sampSendChat('/dm '..rInfo.id..' 60 РК')
                 imgui.CloseCurrentPopup()
             end
-            if imgui.Button(u8'пїЅпїЅ', bsize) then
-                sampSendChat('/dm '..rInfo.id..' 60 пїЅпїЅ')
+            if imgui.Button(u8'ПГ', bsize) then
+                sampSendChat('/dm '..rInfo.id..' 60 ПГ')
                 imgui.CloseCurrentPopup()
             end
-            if imgui.Button(u8'пїЅпїЅ', bsize) then
-                sampSendChat('/dm '..rInfo.id..' 60 пїЅпїЅ')
+            if imgui.Button(u8'СК', bsize) then
+                sampSendChat('/dm '..rInfo.id..' 60 СК')
                 imgui.CloseCurrentPopup()
             end 
-            if imgui.Button(u8'пїЅпїЅ', bsize) then
-                sampSendChat('/dm '..rInfo.id..' 60 пїЅпїЅ')
+            if imgui.Button(u8'ТК', bsize) then
+                sampSendChat('/dm '..rInfo.id..' 60 ТК')
                 imgui.CloseCurrentPopup()
             end
-            if imgui.Button(u8'NRP-пїЅпїЅ', bsize) then
-                sampSendChat('/dm '..rInfo.id..' 60 NRP-пїЅпїЅ')
+            if imgui.Button(u8'NRP-дія', bsize) then
+                sampSendChat('/dm '..rInfo.id..' 60 NRP-дія')
                 imgui.CloseCurrentPopup()
             end 
-            if imgui.Button(u8'NRP-пїЅпїЅпїЅпїЅ', bsize) then
-                sampSendChat('/dm '..rInfo.id..' 20 NRP-пїЅпїЅпїЅпїЅ')
+            if imgui.Button(u8'NRP-їзда', bsize) then
+                sampSendChat('/dm '..rInfo.id..' 20 NRP-їзда')
                 imgui.CloseCurrentPopup()
             end
-            if imgui.Button(u8'NRP-пїЅпїЅпїЅ', bsize) then
-                sampSendChat('/dm '..rInfo.id..' 60 NRP-пїЅпїЅпїЅ')
+            if imgui.Button(u8'NRP-коп', bsize) then
+                sampSendChat('/dm '..rInfo.id..' 60 NRP-коп')
                 imgui.CloseCurrentPopup()
             end
-            if imgui.Button(u8'пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅ', bsize) then
-                sampSendChat('/dm '..rInfo.id..' 90 ВіпїЅпїЅпїЅпїЅ пїЅпїЅ RP')
+            if imgui.Button(u8'Ухід від РП', bsize) then
+                sampSendChat('/dm '..rInfo.id..' 90 Відхід від RP')
                 imgui.CloseCurrentPopup()
             end
-            if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ', bsize) then
+            if imgui.Button(u8'Зачинити', bsize) then
                 imgui.CloseCurrentPopup()
             end
             imgui.EndPopup()
         end
-        if imgui.BeginPopupModal(u8"пїЅпїЅпїЅпїЅпїЅпїЅ mute", _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove) then
+        if imgui.BeginPopupModal(u8"Видати mute", _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove) then
             bsize = imgui.ImVec2(150, 0)
-            if imgui.Button(u8'пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ', bsize) then
+            if imgui.Button(u8'Своя причина', bsize) then
                 sampSetChatInputEnabled(true)
                 sampSetChatInputText('/mute '..rInfo.id..' ')
                 imgui.CloseCurrentPopup()
             end
-            if imgui.Button(u8'пїЅпїЅ', bsize) then
-                sampSendChat('/mute '..rInfo.id..' 30 пїЅпїЅ')
+            if imgui.Button(u8'МГ', bsize) then
+                sampSendChat('/mute '..rInfo.id..' 30 МГ')
                 imgui.CloseCurrentPopup()
             end
             if imgui.Button(u8'Caps', bsize) then
@@ -2743,99 +2749,99 @@ function imgui.OnDrawFrame()
                 sampSendChat('/mute '..rInfo.id..' 30 Translit')
                 imgui.CloseCurrentPopup()
             end
-            if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ', bsize) then
-                sampSendChat('/mute '..rInfo.id..' 45 пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ')
+            if imgui.Button(u8'Образа Гравців', bsize) then
+                sampSendChat('/mute '..rInfo.id..' 45 Образа Гравців')
                 imgui.CloseCurrentPopup()
             end
-            if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅ.пїЅпїЅ пїЅпїЅпїЅ', bsize) then
-                sampSendChat('/mute '..rInfo.id..' 60 пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ')
+            if imgui.Button(u8'Обгов.дій адм', bsize) then
+                sampSendChat('/mute '..rInfo.id..' 60 Обговорення дій адміністрації')
                 imgui.CloseCurrentPopup()
             end
-            if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ', bsize) then
-                sampSendChat('/mute '..rInfo.id..' 90 пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ')
+            if imgui.Button(u8'Згадка родичів', bsize) then
+                sampSendChat('/mute '..rInfo.id..' 90 Згадка родичів')
                 imgui.CloseCurrentPopup()
             end
-            if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ', bsize) then
+            if imgui.Button(u8'Зачинити', bsize) then
                 imgui.CloseCurrentPopup()
             end
             imgui.EndPopup()
         end
-        if imgui.BeginPopupModal(u8"пїЅпїЅпїЅпїЅпїЅпїЅ warn", _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove) then
+        if imgui.BeginPopupModal(u8"Видати warn", _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove) then
             bsize = imgui.ImVec2(175, 0)
-            if imgui.Button(u8'пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ', bsize) then
+            if imgui.Button(u8'Своя причина', bsize) then
                 sampSetChatInputEnabled(true)
                 sampSetChatInputText('/warn '..rInfo.id..' ')
                 imgui.CloseCurrentPopup()
             end
-            if imgui.Button(u8'пїЅпїЅ', bsize) then
-                sampSendChat('/warn '..rInfo.id..' пїЅпїЅ')
+            if imgui.Button(u8'ДМ', bsize) then
+                sampSendChat('/warn '..rInfo.id..' ДМ')
                 imgui.CloseCurrentPopup()
             end
-            if imgui.Button(u8'пїЅпїЅ', bsize) then
-                sampSendChat('/warn '..rInfo.id..' пїЅпїЅ')
+            if imgui.Button(u8'ДБ', bsize) then
+                sampSendChat('/warn '..rInfo.id..' ДБ')
                 imgui.CloseCurrentPopup()
             end  
-            if imgui.Button(u8'пїЅпїЅ', bsize) then
-                sampSendChat('/warn '..rInfo.id..' пїЅпїЅ')
+            if imgui.Button(u8'РК', bsize) then
+                sampSendChat('/warn '..rInfo.id..' РК')
                 imgui.CloseCurrentPopup()
             end
-            if imgui.Button(u8'пїЅпїЅ', bsize) then
-                sampSendChat('/warn '..rInfo.id..' пїЅпїЅ')
+            if imgui.Button(u8'ПГ', bsize) then
+                sampSendChat('/warn '..rInfo.id..' ПГ')
                 imgui.CloseCurrentPopup()
             end
-            if imgui.Button(u8'пїЅпїЅ', bsize) then
-                sampSendChat('/warn '..rInfo.id..' пїЅпїЅ')
+            if imgui.Button(u8'СК', bsize) then
+                sampSendChat('/warn '..rInfo.id..' СК')
                 imgui.CloseCurrentPopup()
             end 
-            if imgui.Button(u8'пїЅпїЅ', bsize) then
-                sampSendChat('/warn '..rInfo.id..' пїЅпїЅ')
+            if imgui.Button(u8'ТК', bsize) then
+                sampSendChat('/warn '..rInfo.id..' ТК')
                 imgui.CloseCurrentPopup()
             end
-            if imgui.Button(u8'NRP-пїЅпїЅпїЅ', bsize) then
-                sampSendChat('/warn '..rInfo.id..' NRP-пїЅпїЅпїЅ')
+            if imgui.Button(u8'NRP-коп', bsize) then
+                sampSendChat('/warn '..rInfo.id..' NRP-коп')
                 imgui.CloseCurrentPopup()
             end
-            if imgui.Button(u8'пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅ', bsize) then
-                sampSendChat('/warn '..rInfo.id..' ВіпїЅпїЅпїЅпїЅ пїЅпїЅ RP')
+            if imgui.Button(u8'Ухід від РП', bsize) then
+                sampSendChat('/warn '..rInfo.id..' Відхід від RP')
                 imgui.CloseCurrentPopup()
             end
-            if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ', bsize) then
+            if imgui.Button(u8'Зачинити', bsize) then
                 imgui.CloseCurrentPopup()
             end
             imgui.EndPopup()
         end
-        if imgui.BeginPopupModal(u8"пїЅпїЅпїЅпїЅпїЅпїЅ ban", _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove) then
+        if imgui.BeginPopupModal(u8"Видати ban", _, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove) then
             bsize = imgui.ImVec2(125, 0)
-            if imgui.Button(u8'пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ', bsize) then
+            if imgui.Button(u8'Своя причина', bsize) then
                 sampSetChatInputEnabled(true)
                 sampSetChatInputText('/ban '..rInfo.id..' ')
                 imgui.CloseCurrentPopup()
             end
-            if imgui.Button(u8'пїЅпїЅпїЅ', bsize) then
-                sampSendChat('/ban '..rInfo.id..' 30 пїЅпїЅпїЅ')
+            if imgui.Button(u8'ППВ', bsize) then
+                sampSendChat('/ban '..rInfo.id..' 30 ППВ')
                 imgui.CloseCurrentPopup()
             end
-            if imgui.Button(u8'пїЅпїЅ.пїЅпїЅпїЅпїЅпїЅ', bsize) then
-                sampSendChat('/ban '..rInfo.id..' 30 пїЅпїЅпїЅпїЅпїЅпїЅ РіпїЅпїЅпїЅпїЅ')
+            if imgui.Button(u8'Об.рідних', bsize) then
+                sampSendChat('/ban '..rInfo.id..' 30 Образа Рідних')
                 imgui.CloseCurrentPopup()
             end
-            if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅпїЅ', bsize) then
-                sampSendChat('/ban '..rInfo.id..' 15 пїЅпїЅпїЅпїЅпїЅпїЅ')
+            if imgui.Button(u8'Багоюз', bsize) then
+                sampSendChat('/ban '..rInfo.id..' 15 Багоюз')
                 imgui.CloseCurrentPopup()
             end
-            if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅпїЅ', bsize) then
-                sampSendChat('/ban '..rInfo.id..' 30 пїЅпїЅпїЅпїЅпїЅпїЅ')
+            if imgui.Button(u8'Нацизм', bsize) then
+                sampSendChat('/ban '..rInfo.id..' 30 Нацизм')
                 imgui.CloseCurrentPopup()
             end   
-            if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ', bsize) then
-                sampSendChat('/ban '..rInfo.id..' 30 пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ')
+            if imgui.Button(u8'Обман адм', bsize) then
+                sampSendChat('/ban '..rInfo.id..' 30 Обман адміністрації')
                 imgui.CloseCurrentPopup()
             end  
-            if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ RP', bsize) then
-                sampSendChat('/ban '..rInfo.id..' 3 пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ RP-пїЅпїЅпїЅпїЅпїЅпїЅпїЅ')
+            if imgui.Button(u8'Перешкода RP', bsize) then
+                sampSendChat('/ban '..rInfo.id..' 3 Перешкода RP-процесу')
                 imgui.CloseCurrentPopup()
             end 
-            if imgui.Button(u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ', bsize) then
+            if imgui.Button(u8'Зачинити', bsize) then
                 imgui.CloseCurrentPopup()
             end
             imgui.EndPopup()
@@ -2852,7 +2858,7 @@ function samp.onShowDialog(id, style, title, button1, button2, text)
             lua_thread.create(function()
                 while true do
                     wait(0)
-                    if title:match("пїЅпїЅпїЅпїЅпїЅпїЅ") then
+                    if title:match("Пароль") then
                         sampSendDialogResponse(sampGetCurrentDialogId(), 1, _, elements.input.adminPassword.v)
                         sampCloseCurrentDialogWithButton(0)
                         break
@@ -2860,7 +2866,7 @@ function samp.onShowDialog(id, style, title, button1, button2, text)
                 end
             end)
         else
-            sampAddChatMessage('{FF0000}[пїЅпїЅпїЅпїЅпїЅпїЅпїЅ] {FF8C00}пїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅ.', stColor)
+            sampAddChatMessage('{FF0000}[Помилка] {FF8C00}Авто-вхід не буде зроблено, оскільки ви не вказали адмін-пароль.', stColor)
             elements.checkbox.autoCome.v = false
             HLcfg.config.autoCome = elements.checkbox.autoCome.v
             save()
@@ -2897,57 +2903,57 @@ end
 function getActiveOrganization(id)
 	local color = sampGetPlayerColor(id)
 	if color == 553648127 then
-		organization = u8'пїЅпїЅпїЅ[0]'
+		organization = u8'Нет[0]'
 	elseif color == 2854633982 then
 		organization = u8'LSPD[1]'
 	elseif color == 2855350577 then
 		organization = u8'FBI[2]'
 	elseif color == 2855512627 then
-		organization = u8'пїЅпїЅпїЅпїЅпїЅ[3]'
+		organization = u8'Армия[3]'
 	elseif color == 4289014314 then
-		organization = u8'пїЅпїЅпїЅ[4]'
+		organization = u8'МЧС[4]'
 	elseif color == 4292716289 then
 		organization = u8'LCN[5]'
 	elseif color == 2868838400 then
-		organization = u8'пїЅпїЅпїЅпїЅпїЅпїЅ[6]'
+		organization = u8'Якудза[6]'
 	elseif color == 4279324017 then
-		organization = u8'пїЅпїЅпїЅпїЅпїЅ[7]'
+		organization = u8'Мэрия[7]'
 	elseif color == 2854633982 then
 		organization = u8'SFPD[10]'
 	elseif color == 4279475180 then
-		organization = u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ[11]'
+		organization = u8'Инструкторы[11]'
 	elseif color == 4287108071 then
-		organization = u8'пїЅпїЅпїЅпїЅпїЅпїЅ[12]'
+		organization = u8'Баллас[12]'
 	elseif color == 2866533892 then
-		organization = u8'пїЅпїЅпїЅпїЅпїЅ[13]'
+		organization = u8'Вагос[13]'
 	elseif color == 4290033079 then
-		organization = u8'пїЅпїЅпїЅпїЅпїЅ[14]'
+		organization = u8'Мафия[14]'
 	elseif color == 2852167424 then
-		organization = u8'пїЅпїЅпїЅпїЅ[15]'
+		organization = u8'Грув[15]'
 	elseif color == 2856354955 then
 		organization = u8'Sa News[16]'
 	elseif color == 3355573503 then
-		organization = u8'пїЅпїЅпїЅпїЅпїЅпїЅ[17]'
+		organization = u8'Ацтеки[17]'
 	elseif color == 2860761023 then
-		organization = u8'пїЅпїЅпїЅпїЅ[18]'
+		organization = u8'Рифа[18]'
 	elseif color == 2854633982 then
 		organization = u8'LVPD[21]'
 	elseif color == 4285563024 then
-		organization = u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅ[22]'
+		organization = u8'Хитманы[22]'
 	elseif color == 4294201344 then
-		organization = u8'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ[23]'
+		organization = u8'Стритрейсеры[23]'
 	elseif color == 4281240407 then
 		organization = u8'SWAT[24]'
 	elseif color == 2859499664 then
-		organization = u8'пїЅпїЅ[25]'
+		organization = u8'АП[25]'
 	elseif color == 2868838400 then
-		organization = u8'пїЅпїЅпїЅпїЅпїЅпїЅ[26]'
+		organization = u8'Казино[26]'
 	elseif color == 2863280947 then
-		organization = u8'пїЅпїЅ Red[()]'
+		organization = u8'ПБ Red[()]'
 	elseif color == 4281576191 then
-		organization = u8'пїЅпїЅ Blue[()]'
+		organization = u8'ПБ Blue[()]'
 	elseif color == 8025703 then
-		organization = u8'пїЅ пїЅпїЅпїЅпїЅпїЅ[()]'
+		organization = u8'В маске[()]'
 	end
 	return organization
 end
@@ -3043,7 +3049,7 @@ function samp.onSendCommand(cmd)
 		if rID:len() > -1 and rID:len() < 4 then
             rInfo.id = tonumber(rID)
 		else
-			sampAddChatMessage('{FF0000}[пїЅпїЅпїЅпїЅпїЅпїЅпїЅ] {FF8C00}пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ.', stColor)
+			sampAddChatMessage('{FF0000}[Помилка] {FF8C00}Вкажіть коректний ІД.', stColor)
 		end
     end
     if rGoto or rID then 
@@ -3456,7 +3462,7 @@ function imgui.ToggleButton(str_id, bool)
 end
 
 local russian_characters = {
-    [168] = 'пїЅ', [184] = 'пїЅ', [192] = 'пїЅ', [193] = 'пїЅ', [194] = 'пїЅ', [195] = 'пїЅ', [196] = 'пїЅ', [197] = 'пїЅ', [198] = 'пїЅ', [199] = 'пїЅ', [200] = 'пїЅ', [201] = 'пїЅ', [202] = 'пїЅ', [203] = 'пїЅ', [204] = 'пїЅ', [205] = 'пїЅ', [206] = 'пїЅ', [207] = 'пїЅ', [208] = 'пїЅ', [209] = 'пїЅ', [210] = 'пїЅ', [211] = 'пїЅ', [212] = 'пїЅ', [213] = 'пїЅ', [214] = 'пїЅ', [215] = 'пїЅ', [216] = 'пїЅ', [217] = 'пїЅ', [218] = 'пїЅ', [219] = 'пїЅ', [220] = 'пїЅ', [221] = 'пїЅ', [222] = 'пїЅ', [223] = 'пїЅ', [224] = 'пїЅ', [225] = 'пїЅ', [226] = 'пїЅ', [227] = 'пїЅ', [228] = 'пїЅ', [229] = 'пїЅ', [230] = 'пїЅ', [231] = 'пїЅ', [232] = 'пїЅ', [233] = 'пїЅ', [234] = 'пїЅ', [235] = 'пїЅ', [236] = 'пїЅ', [237] = 'пїЅ', [238] = 'пїЅ', [239] = 'пїЅ', [240] = 'пїЅ', [241] = 'пїЅ', [242] = 'пїЅ', [243] = 'пїЅ', [244] = 'пїЅ', [245] = 'пїЅ', [246] = 'пїЅ', [247] = 'пїЅ', [248] = 'пїЅ', [249] = 'пїЅ', [250] = 'пїЅ', [251] = 'пїЅ', [252] = 'пїЅ', [253] = 'пїЅ', [254] = 'пїЅ', [255] = 'пїЅ',
+    [168] = 'Ё', [184] = 'ё', [192] = 'А', [193] = 'Б', [194] = 'В', [195] = 'Г', [196] = 'Д', [197] = 'Е', [198] = 'Ж', [199] = 'З', [200] = 'И', [201] = 'Й', [202] = 'К', [203] = 'Л', [204] = 'М', [205] = 'Н', [206] = 'О', [207] = 'П', [208] = 'Р', [209] = 'С', [210] = 'Т', [211] = 'У', [212] = 'Ф', [213] = 'Х', [214] = 'Ц', [215] = 'Ч', [216] = 'Ш', [217] = 'Щ', [218] = 'Ъ', [219] = 'Ы', [220] = 'Ь', [221] = 'Э', [222] = 'Ю', [223] = 'Я', [224] = 'а', [225] = 'б', [226] = 'в', [227] = 'г', [228] = 'д', [229] = 'е', [230] = 'ж', [231] = 'з', [232] = 'и', [233] = 'й', [234] = 'к', [235] = 'л', [236] = 'м', [237] = 'н', [238] = 'о', [239] = 'п', [240] = 'р', [241] = 'с', [242] = 'т', [243] = 'у', [244] = 'ф', [245] = 'х', [246] = 'ц', [247] = 'ч', [248] = 'ш', [249] = 'щ', [250] = 'ъ', [251] = 'ы', [252] = 'ь', [253] = 'э', [254] = 'ю', [255] = 'я',
 }
 function string.rlower(s)
     s = s:lower()
@@ -3468,7 +3474,7 @@ function string.rlower(s)
         local ch = s:byte(i)
         if ch >= 192 and ch <= 223 then -- upper russian characters
             output = output .. russian_characters[ch + 32]
-        elseif ch == 168 then -- пїЅ
+        elseif ch == 168 then -- Ё
             output = output .. russian_characters[184]
         else
             output = output .. string.char(ch)
@@ -3522,55 +3528,55 @@ function dialogHiderText()
     local result, button, list, input = sampHasDialogRespond(3910)
 	if result then
 		if list == 0 and button == 1 then
-			sampSendChat('/s пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ!')
+			sampSendChat('/s Увага, озвучую правила!')
 			wait(1000)
-			sampSendChat('/s пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.')
+			sampSendChat('/s Заборонено: Зривати захід, бігати не за призначенням, стріляти без команди.')
 			wait(1000)
-			sampSendChat('/s пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 2-пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ-пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ..')
+			sampSendChat('/s Я викликаю 2-ох гравців, вони стають спиною до спини на будь-якій дистанції..')
 			wait(1000)
-			sampSendChat('/s пїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ 1-2-3 пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ.')
+			sampSendChat('/s І на рахунок 1-2-3 починають ПВП.')
 		elseif list == 1 and button == 1 then
-			sampSendChat('/s пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ!')
+			sampSendChat('/s Увага, озвучую правила!')
 			wait(1000)
-			sampSendChat('/s пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅ.')
+			sampSendChat('/s Заборонено: Зривати захід, бігати не за призначенням, тікати.')
 			wait(1000)
-			sampSendChat('/s пїЅпїЅпїЅпїЅпїЅ /try пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.')
+			sampSendChat('/s Через /try ми знайдемо переможця.')
 		elseif list == 2 and button == 1 then
-			sampSendChat('/s пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ!')
+			sampSendChat('/s Увага, озвучую правила!')
 			wait(1000)
-			sampSendChat('/s пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.')
+			sampSendChat('/s Заборонено: Зривати захід, змінювати машину.')
 			wait(1000)
-			sampSendChat('/s пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, - пїЅпїЅпїЅпїЅпїЅпїЅ.')
+			sampSendChat('/s Останній, хто залишився поза підірваною машиною, - переміг.')
 		elseif list == 3 and button == 1 then
-			sampSendChat('/s пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ!')
+			sampSendChat('/s Увага, озвучую правила!')
 			wait(1000)
-			sampSendChat('/s пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.')
+			sampSendChat('/s Заборонено: Зривати захід, стріляти по гравцях.')
 			wait(1000)
-			sampSendChat('/s пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅ.')
+			sampSendChat('/s Хто перший пройде паркур - переміг.')
 		elseif list == 4 and button == 1 then
-			sampSendChat('/s пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ!')
+			sampSendChat('/s Увага, озвучую правила!')
 			wait(1000)
-			sampSendChat('/s пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.')
+			sampSendChat('/s Заборонено: Зривати захід, стріляти по гравцях.')
 			wait(1000)
-			sampSendChat('/s пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅ.')
+			sampSendChat('/s Хто перший залишиться на поверхні - переміг.')
 		elseif list == 5 and button == 1 then
-			sampSendChat('/s пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ!')
+			sampSendChat('/s Увага, озвучую правила!')
 			wait(1000)
-			sampSendChat('/s пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.')
+			sampSendChat('/s Заборонено: Зривати захід, стріляти по гравцях.')
 			wait(1000)
-			sampSendChat('/s пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅ.')
+			sampSendChat('/s Хто останній залишиться в живих - переміг.')
 		elseif list == 6 and button == 1 then
-			sampSendChat('/s пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ!')
+			sampSendChat('/s Увага, озвучую правила!')
 			wait(1000)
-			sampSendChat('/s пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.')
+			sampSendChat('/s Заборонено: Зривати захід, стріляти по гравцях.')
 			wait(1000)
-			sampSendChat('/s пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅ.')
+			sampSendChat('/s Хто краще за всіх сховається - переміг.')
 		elseif list == 7 and button == 1 then
-			sampSendChat('/s пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ!')
+			sampSendChat('/s Увага, озвучую правила!')
 			wait(1000)
-			sampSendChat('/s пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ.')
+			sampSendChat('/s Заборонено: Зривати захід.')
 			wait(1000)
-			sampSendChat('/s пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ. пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅ.')
+			sampSendChat('/s Ви повинні будете вбити один одного. Хто останній залишиться в живих - переміг.')
 		end
     end
     end)
@@ -3601,7 +3607,7 @@ end
 
 function samp.onPlayerQuit(id, reason)
 	if elements.checkbox.leaveChecker.v then
-		sampAddChatMessage(string.format("{FF0000}[GhostTools] {FF8C00}%s[%d] пїЅпїЅ'пїЅпїЅпїЅпїЅпїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅпїЅпїЅ: %s", getNick(id), id, quitReason[reason+1]), stColor)
+		sampAddChatMessage(string.format("{FF0000}[GhostTools] {FF8C00}%s[%d] від'єднався. Причина: %s", getNick(id), id, quitReason[reason+1]), stColor)
     end
 end
   
@@ -4201,4 +4207,4 @@ function red()
     colors[clr.PlotHistogram]          = ImVec4(0.90, 0.70, 0.00, 1.00)
     colors[clr.PlotHistogramHovered]   = ImVec4(1.00, 0.60, 0.00, 1.00)
     colors[clr.ModalWindowDarkening]   = ImVec4(0.80, 0.80, 0.80, 0.35)
-end 
+end
