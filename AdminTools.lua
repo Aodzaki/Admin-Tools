@@ -16,7 +16,7 @@ local Vector3D = require "vector3d"
 local fa = require 'fAwesome5' 
 encoding.default = 'CP1251'
 u8 = encoding.UTF8   
-script_name("moonloader-script-updater-AdminTools")
+script_name("AdminTools")
 script_version("17.08.2024")  
 
 local enable_autoupdate = true
