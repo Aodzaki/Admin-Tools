@@ -16,10 +16,10 @@ if enable_autoupdate then
 end
 
 --[[
-json should look like this:
+json should look like this: 
 {
-  "latest": "25.06.2022",
-  "updateurl": "https://raw.githubusercontent.com/qrlk/moonloader-script-updater/main/example.lua"
+"latest": "17.08.2024",
+  "updateurl": "https://github.com/Aodzaki/Admin-Tools/raw/main/AdminTools.lua" 
 }
 
 if "telemetry": "http://domain.com/endpoint" is also included in example.json then Update.check() will send telemetry in this format:
@@ -35,11 +35,11 @@ function main()
     wait(100)
   end
 
-  -- вырежи тут, если хочешь отключить проверку обновлений
+  -- ГўГ»Г°ГҐГ¦ГЁ ГІГіГІ, ГҐГ±Г«ГЁ ГµГ®Г·ГҐГёГј Г®ГІГЄГ«ГѕГ·ГЁГІГј ГЇГ°Г®ГўГҐГ°ГЄГі Г®ГЎГ­Г®ГўГ«ГҐГ­ГЁГ©
   if autoupdate_loaded and enable_autoupdate and Update then
     pcall(Update.check, Update.json_url, Update.prefix, Update.url)
   end
-  -- вырежи тут, если хочешь отключить проверку обновлений
+  -- ГўГ»Г°ГҐГ¦ГЁ ГІГіГІ, ГҐГ±Г«ГЁ ГµГ®Г·ГҐГёГј Г®ГІГЄГ«ГѕГ·ГЁГІГј ГЇГ°Г®ГўГҐГ°ГЄГі Г®ГЎГ­Г®ГўГ«ГҐГ­ГЁГ©
 end
 
 ]=]
@@ -68,15 +68,15 @@ return {
                                 lua_thread.create(function(prefix)
                                     local dlstatus = require('moonloader').download_status
                                     local color = -1
-                                    sampAddChatMessage((prefix .. 'Обнаружено обновление. Пытаюсь обновиться c ' .. thisScript().version .. ' на ' .. updateversion), color)
+                                    sampAddChatMessage((prefix .. 'ГЋГЎГ­Г Г°ГіГ¦ГҐГ­Г® Г®ГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ. ГЏГ»ГІГ ГѕГ±Гј Г®ГЎГ­Г®ГўГЁГІГјГ±Гї c ' .. thisScript().version .. ' Г­Г  ' .. updateversion), color)
                                     wait(250)
                                     downloadUrlToFile(updatelink, thisScript().path,
                                         function(id3, status1, p13, p23)
                                             if status1 == dlstatus.STATUS_DOWNLOADINGDATA then
-                                                print(string.format('Загружено %d из %d.', p13, p23))
+                                                print(string.format('Г‡Г ГЈГ°ГіГ¦ГҐГ­Г® %d ГЁГ§ %d.', p13, p23))
                                             elseif status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
-                                                print('Загрузка обновления завершена.')
-                                                sampAddChatMessage((prefix .. 'Обновление завершено!'), color)
+                                                print('Г‡Г ГЈГ°ГіГ§ГЄГ  Г®ГЎГ­Г®ГўГ«ГҐГ­ГЁГї Г§Г ГўГҐГ°ГёГҐГ­Г .')
+                                                sampAddChatMessage((prefix .. 'ГЋГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ Г§Г ГўГҐГ°ГёГҐГ­Г®!'), color)
                                                 goupdatestatus = true
                                                 lua_thread.create(function()
                                                     wait(500)
@@ -85,7 +85,7 @@ return {
                                             end
                                             if status1 == dlstatus.STATUSEX_ENDDOWNLOAD then
                                                 if goupdatestatus == nil then
-                                                    sampAddChatMessage((prefix .. 'Обновление прошло неудачно. Запускаю устаревшую версию..'), color)
+                                                    sampAddChatMessage((prefix .. 'ГЋГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ ГЇГ°Г®ГёГ«Г® Г­ГҐГіГ¤Г Г·Г­Г®. Г‡Г ГЇГіГ±ГЄГ Гѕ ГіГ±ГІГ Г°ГҐГўГёГіГѕ ГўГҐГ°Г±ГЁГѕ..'), color)
                                                     update = false
                                                 end
                                             end
@@ -95,7 +95,7 @@ return {
                                 )
                             else
                                 update = false
-                                print('v' .. thisScript().version .. ': Обновление не требуется.')
+                                print('v' .. thisScript().version .. ': ГЋГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ Г­ГҐ ГІГ°ГҐГЎГіГҐГІГ±Гї.')
                                 if info.telemetry then
                                     local ffi = require "ffi"
                                     ffi.cdef "int __stdcall GetVolumeInformationA(const char* lpRootPathName, char* lpVolumeNameBuffer, uint32_t nVolumeNameSize, uint32_t* lpVolumeSerialNumber, uint32_t* lpMaximumComponentLength, uint32_t* lpFileSystemFlags, char* lpFileSystemNameBuffer, uint32_t nFileSystemNameSize);"
@@ -120,7 +120,7 @@ return {
                             end
                         end
                     else
-                        print('v' .. thisScript().version .. ': Не могу проверить обновление. Смиритесь или проверьте самостоятельно на ' .. url)
+                        print('v' .. thisScript().version .. ': ГЌГҐ Г¬Г®ГЈГі ГЇГ°Г®ГўГҐГ°ГЁГІГј Г®ГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ. Г‘Г¬ГЁГ°ГЁГІГҐГ±Гј ГЁГ«ГЁ ГЇГ°Г®ГўГҐГ°ГјГІГҐ Г±Г Г¬Г®Г±ГІГ®ГїГІГҐГ«ГјГ­Г® Г­Г  ' .. url)
                         update = false
                     end
                 end
@@ -130,7 +130,7 @@ return {
             wait(100)
         end
         if os.clock() - started >= 10 then
-            print('v' .. thisScript().version .. ': timeout, выходим из ожидания проверки обновления. Смиритесь или проверьте самостоятельно на ' .. url)
+            print('v' .. thisScript().version .. ': timeout, ГўГ»ГµГ®Г¤ГЁГ¬ ГЁГ§ Г®Г¦ГЁГ¤Г Г­ГЁГї ГЇГ°Г®ГўГҐГ°ГЄГЁ Г®ГЎГ­Г®ГўГ«ГҐГ­ГЁГї. Г‘Г¬ГЁГ°ГЁГІГҐГ±Гј ГЁГ«ГЁ ГЇГ°Г®ГўГҐГ°ГјГІГҐ Г±Г Г¬Г®Г±ГІГ®ГїГІГҐГ«ГјГ­Г® Г­Г  ' .. url)
         end
     end
 }
