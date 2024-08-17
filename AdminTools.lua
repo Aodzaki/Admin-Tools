@@ -975,16 +975,14 @@ local pedPMy = imgui.ImFloat4( imgui.ImColor( explode_argb(HLcfg.config.pedPMy) 
 local carPMy = imgui.ImFloat4( imgui.ImColor( explode_argb(HLcfg.config.carPMy) ):GetFloat4() )  
 
 function main()
-    if not isSampfuncsLoaded() or not isSampLoaded() then
-        return
-    end
-    while not isSampAvailable() do
-        wait(100)
-    end
+    while not isSampAvailable() do wait(100) end
+    sampAddChatMessage('{FF0000}[GhostTools] {FF8C00}Скрипт був успішно завантажений.', stColor)
+    repeat
+        wait(0)
+    until sampIsLocalPlayerSpawned()
     if autoupdate_loaded and enable_autoupdate and Update then
         pcall(Update.check, Update.json_url, Update.prefix, Update.url)
     end
-    until sampIsLocalPlayerSpawned()
     fixChatCoursor()
     if not doesDirectoryExist(isDirrectory) then
         createDirectory(isDirrectory)
